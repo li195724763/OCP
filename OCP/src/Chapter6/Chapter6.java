@@ -28,7 +28,8 @@ public class Chapter6 {
 		}
 		
 		//try-with-resource
-		try(Turkey t = new Turkey()){ // does not compile if not having a reference t. E.g. simply having "new Turkey()" will not compile
+		try(Turkey t = new Turkey();
+				Chicken c = new Chicken()){ // does not compile if not having a reference t. E.g. simply having "new Turkey()" will not compile
 			
 		} catch(Exception e) {
 			System.out.println("catching Exception throwing from close()");
@@ -36,6 +37,13 @@ public class Chapter6 {
 		
 		autoCloseable();
 		assertionTest(1);
+		try {
+			Turkey t = new Turkey();{
+				System.out.print("a");
+			}
+		}catch (Exception e) {
+			
+		}
 	}
 	
 	public static String method_1() throws IllegalStateException{
