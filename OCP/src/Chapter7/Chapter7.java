@@ -25,7 +25,7 @@ public class Chapter7 {
 	public class SheepManager{
 		private AtomicInteger count = new AtomicInteger(0); // need constructor
 		
-		//private Object lock = new Object();
+		//private Chapter7Util.OBJECT lock = new Chapter7Util.OBJECT();
 		private void incrementCount() {
 			//lock = new ArrayList<String>();
 			synchronized (SheepManager.class) {
@@ -34,11 +34,6 @@ public class Chapter7 {
 		}
 		
 	}
-	private static int counter = 0;
-	public static final Chapter7 OBJECT = new Chapter7();
-	static ExecutorService staticExecutor = Executors.newSingleThreadExecutor();
-	static int UTILITY_INT = 0;
-	static int _count = 0;
 	public static void main(String[] args) throws InterruptedException, InterruptedException, TimeoutException , ExecutionException {
 		/*DOES NOT COMPILE
 		 * Runnable tc2 = () -> 2;//DOES NOT COMPILE
@@ -54,24 +49,24 @@ public class Chapter7 {
 		Runnable tc1 = () -> System.out.println("my first runnable after 10 years");	
 		tc1.run();	//no thread created
 			
-		new Thread(OBJECT.new PrintData()).start();
+		new Thread(Chapter7Util.OBJECT.new PrintData()).start();
 		new ReadInventoryThread().start();
 		
-		new Thread(OBJECT.new PrintData()).run();//no thread created
+		new Thread(Chapter7Util.OBJECT.new PrintData()).run();//no thread created
 		
 		new Thread(() -> {
 			for(int i=0;i<100;i++) {
-				counter++;
+				Chapter7Util.counter++;
 			}
 			
 		}).start();
 		
-		while(counter < 100) {
+		while(Chapter7Util.counter < 100) {
 			System.out.println("counter is less than 100");
 			Thread.sleep(1000);//throw InterruptedException
 		}
 		
-		if(counter == 100) {
+		if(Chapter7Util.counter == 100) {
 			System.out.println("counter is now 100");
 		}
 		
@@ -79,11 +74,11 @@ public class Chapter7 {
 		//assert false : "the program does not hang";
 		System.out.println("seems the program won't hang");
 		
-		OBJECT.method_3();
-		OBJECT.executorServiceUsingCallable();
+		Chapter7Util.OBJECT.method_3();
+		Chapter7Util.OBJECT.executorServiceUsingCallable();
 		schedulerTest();
 		System.out.println("available process is : " + Runtime.getRuntime().availableProcessors());
-		OBJECT.synchronizedTest();
+		Chapter7Util.OBJECT.synchronizedTest();
 		reproduceConcurrentException();
 		reproduceConcurrentExceptionOnList();
 		concurrentCollection();
@@ -93,6 +88,9 @@ public class Chapter7 {
 		testParallelStream();
 		testParallelReduction();
 		testParallelCollector();
+		testCyclicBarrier();
+		System.out.println("Fraction number " + testRecursiveNumFraction(5));
+		testDeadLock();
 		
 	}
 	
@@ -105,7 +103,7 @@ public class Chapter7 {
 	}
 	
 	public static void method_2() {// static method
-		PrintData localInner = OBJECT.new PrintData();//created from the outter class object
+		PrintData localInner = Chapter7Util.OBJECT.new PrintData();//created from the outter class Chapter7Util.OBJECT
 		localInner.run();
 		
 		ReadInventoryThread localStaticInner = new ReadInventoryThread();
@@ -154,8 +152,8 @@ public class Chapter7 {
 	}
 	
 	public void method_3() {
-		staticExecutor.submit(() -> System.out.println("static executor service"));
-		staticExecutor.shutdown();
+		Chapter7Util.staticExecutor.submit(() -> System.out.println("static executor service"));
+		Chapter7Util.staticExecutor.shutdown();
 	}
 	
 	public void executorServiceUsingCallable() throws InterruptedException, ExecutionException {
@@ -163,8 +161,8 @@ public class Chapter7 {
 		service = Executors.newSingleThreadExecutor();
 		try {
 			//Future<Integer> tc1 = service.submit(() -> 11+22);
-			service.submit(() -> UTILITY_INT = 11+22);
-			service.submit(()-> System.out.println("calling executorServiceUsingCallable and the result is : " + UTILITY_INT));
+			service.submit(() -> Chapter7Util.UTILITY_INT = 11+22);
+			service.submit(()-> System.out.println("calling executorServiceUsingCallable and the result is : " + Chapter7Util.UTILITY_INT));
 			//WHY use a separate runnable result out in UTILITY_INT IS 0?????
 		}finally {
 			service.shutdown();
@@ -204,9 +202,9 @@ public class Chapter7 {
 	}
 	
 	private static void staticSynchronized() {
-		//final Object lock = new Object();
+		//final Chapter7Util.OBJECT lock = new Chapter7Util.OBJECT();
 		synchronized (Chapter7.class){
-			System.out.println("UTILITY_INT is : " + ++UTILITY_INT);
+			System.out.println("UTILITY_INT is : " + ++Chapter7Util.UTILITY_INT);
 		} 
 		
 	}
@@ -355,5 +353,103 @@ public class Chapter7 {
 		ConcurrentMap<Integer,List<String>> tc5 = tc4.collect(Collectors.groupingByConcurrent(s -> s.length()));
 		System.out.println(tc5);
 	}
+		
+	public static long testRecursiveNumFraction(int num) {
+		if(num <= 1) return 1;
+		else return num * testRecursiveNumFraction(num-1);
+	}
+	
+	/*****************CyclicBarrierProces Testing***************/
+	public static void testCyclicBarrier() {
+		ExecutorService service = Chapter7Util.getExecutorServicce(4);
+		CyclicBarrier c1 = new CyclicBarrier(4);//4 means I need 4 thread in total and then I can release the barrier, hanged if the number of barrier is greater than the totoal number of thread.
+		CyclicBarrier c2 = new CyclicBarrier(4, () -> System.out.println("pen cleaned!!!"));
+		
+		for(int i=0;i<4;i++) {
+			service.submit(() ->  testCyclicBarrierProcess(c1, c2));
+		}
+		service.shutdown();
+	}
+	
+	public static void testCyclicBarrierProcess(CyclicBarrier c1, CyclicBarrier c2) {		
+		try {
+			testCyclicBarrierRemoveAnimal();
+			c1.await();
+			testCyclicBarrierCleanPen();
+			c2.await();
+			testCyclicBarrierAddAnial();
+		} catch (InterruptedException | BrokenBarrierException e) {
+			e.printStackTrace();
+		} 
+	}
+	
+	public static void testCyclicBarrierRemoveAnimal() {
+		System.out.println("Removing Animal");
+	}
+	
+	public static void testCyclicBarrierCleanPen() {
+		System.out.println("Cleanning Pen");
+	}
+	
+	public static void testCyclicBarrierAddAnial() {
+		System.out.println("Add Aniaml");
+	}
+	
+	
+	/*****************DeadLock Testing***************/
+	
+	public static void move() {
+		try {
+			Thread.sleep(100);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}	
+	
+	public static void testDeadLockEatAndDrink(Food food, Water water) {
+		synchronized(food) {	
+			System.out.println("Got food1");
+			move();
+			synchronized(water) {
+				System.out.println("Got water2");
+			}
+		}
+		
+	}
+	
+	public static void testDeadLockDrinkAndEat(Food food, Water water) {
+		synchronized(water) {
+			System.out.println("Got Water1");
+			move();
+			synchronized(food) {
+				System.out.println("Got food2");
+			}
+		}
+		
+	}
+	
+	public static void testDeadLock() {
+		ExecutorService service = null;
+		service = Executors.newFixedThreadPool(2);
+		Water water = new Water();
+		Food food = new Food();
+		
+		try {
+			service.submit(() -> testDeadLockEatAndDrink(food, water));
+			//service.submit(() -> testDeadLockDrinkAndEat(food, water)); //Dead Lock
+		}finally {
+			service.shutdown();
+		}
+		
+	}
 
+}
+
+class Food{
+	
+}
+
+class Water{
+	
 }

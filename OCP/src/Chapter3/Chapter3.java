@@ -126,12 +126,12 @@ public class Chapter3 implements Comparable<Chapter3>{
 		tc17.add(new Chapter3("2", "Lara"));
 		tc17.add(new Chapter3("3", "Erica"));
 		Collections.sort(tc17);
-		System.out.println("the order of chapter3 object is: " + tc17);
+		System.out.println("the order of chapter3 Chapter7Util.OBJECT is: " + tc17);
 		
 		Comparator<Chapter3> tc18 = (s1, s2) -> s2.name.compareTo(s1.name); //sort on reverse order.
 		
 		Collections.sort(tc17, tc18);
-		System.out.println("the order of chapter3 object based on Comparator is: " + tc17);
+		System.out.println("the order of chapter3 Chapter7Util.OBJECT based on Comparator is: " + tc17);
 		
 		ArrayList<Generic6> tc19 = new ArrayList<>();
 		//Collections.sort(tc19);//DOES NOT COMPILE

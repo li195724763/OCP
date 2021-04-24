@@ -99,7 +99,7 @@ public class Chapter4 {
 		//Stream<String> tc28_1 = tc28.flatMap(List::stream); //Flat map the List to String
 		//IntStream tc28_2 = tc28.flatMap(List::stream).flatMapToInt(x -> IntStream.of(x.length()));
 		// .forEach(tc28_2 -> System.out.println("flat map: " + tc28_2));
-		//Stream<Object> tc28_3 = tc28.map(List::stream); This is an Object type
+		//Stream<Chapter7Util.OBJECT> tc28_3 = tc28.map(List::stream); This is an Chapter7Util.OBJECT type
 		
 		Stream<String> tc29 = Stream.of("black bear", "brown bear", "grizzly");
 		//System.out.println(tc29.filter(tc29_1 -> tc29_1.startsWith("g")).count());
@@ -111,7 +111,7 @@ public class Chapter4 {
 		
 		Stream<Integer> tc31 = Stream.of(1,3,4,5);
 		if(tc31.reduce(0, (tc20_1, tc20_2) -> tc20_1 + tc20_2) instanceof Integer) {
-			System.out.println("reduce with identifier return Object type"); //reduce with identifier
+			System.out.println("reduce with identifier return Chapter7Util.OBJECT type"); //reduce with identifier
 		};
 		//tc31.reduce((tc20_1, tc20_2) -> tc20_1 + tc20_2).ifPresent(System.out::println); //reduce without identifier
 		

@@ -78,7 +78,7 @@ public class Chapter1{
     //myClass.id = 1;
     System.out.println("Hello world!");
     System.out.println("the hashCode is " + myClass.hashCode());
-    System.out.println("the hashCode of inner class object is " + myClass.returnInner().hashCode());
+    System.out.println("the hashCode of inner class Chapter7Util.OBJECT is " + myClass.returnInner().hashCode());
     //System.out.println("compile " + myClass.returnInner().localInner);//DOES NOT COMPILE, cannot access local inner class member
 	
     for(Season s : Season.values()) {
