@@ -2,9 +2,19 @@ package Chapter7;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+/*DOES NOT COMPILE
+ * Runnable tc2 = () -> 2;//DOES NOT COMPILE
+ * 
+ * */
+
+/*Throw Exception
+ * e.shutdown();
+ * e.execute(() -> System.out.println("Printing zoo inventory"));// Throw exception
+ * 
+ * */	 
 
 public class Chapter7 {
 	
@@ -34,51 +44,17 @@ public class Chapter7 {
 		}
 		
 	}
-	public static void main(String[] args) throws InterruptedException, InterruptedException, TimeoutException , ExecutionException {
-		/*DOES NOT COMPILE
-		 * Runnable tc2 = () -> 2;//DOES NOT COMPILE
-		 * 
-		 * */
+	public static void main(String[] args) throws InterruptedException, InterruptedException, TimeoutException , ExecutionException {				
+		testMainThreadAndSeparateThread();
+		testRunMethodWithoutStart();
+		testPollingWithSleep();
 		
-		/*Throw Exception
-		 * e.shutdown();
-		 * e.execute(() -> System.out.println("Printing zoo inventory"));// Throw exception
-		 * 
-		 * */
-		System.out.println("main thread");
-		Runnable tc1 = () -> System.out.println("my first runnable after 10 years");	
-		tc1.run();	//no thread created
-			
-		new Thread(Chapter7Util.OBJECT.new PrintData()).start();
-		new ReadInventoryThread().start();
-		
-		new Thread(Chapter7Util.OBJECT.new PrintData()).run();//no thread created
-		
-		new Thread(() -> {
-			for(int i=0;i<100;i++) {
-				Chapter7Util.counter++;
-			}
-			
-		}).start();
-		
-		while(Chapter7Util.counter < 100) {
-			System.out.println("counter is less than 100");
-			Thread.sleep(1000);//throw InterruptedException
-		}
-		
-		if(Chapter7Util.counter == 100) {
-			System.out.println("counter is now 100");
-		}
-		
-		executorTest();
-		//assert false : "the program does not hang";
-		System.out.println("seems the program won't hang");
-		
-		Chapter7Util.OBJECT.method_3();
-		Chapter7Util.OBJECT.executorServiceUsingCallable();
+		testExecutorService();
+		testexecutorServiceUsingCallable();
+		testExecutorWithFuture();
 		schedulerTest();
 		System.out.println("available process is : " + Runtime.getRuntime().availableProcessors());
-		Chapter7Util.OBJECT.synchronizedTest();
+		testSynchronized();
 		reproduceConcurrentException();
 		reproduceConcurrentExceptionOnList();
 		concurrentCollection();
@@ -92,6 +68,49 @@ public class Chapter7 {
 		System.out.println("Fraction number " + testRecursiveNumFraction(5));
 		testDeadLock();
 		
+	}
+	
+	public static void testMainThreadAndSeparateThread () {
+		System.out.println("main thread");
+		Runnable tc1 = () -> System.out.println("my first runnable after 10 years");	
+		tc1.run();	//no thread created
+			
+		new Thread(Chapter7Util.OBJECT.new PrintData()).start();
+		new ReadInventoryThread().start();
+	}
+	
+	public static void testRunMethodWithoutStart() {
+		System.out.println("under  testRunMethodWithoutStart 1");
+		new Thread(Chapter7Util.OBJECT.new PrintData()).run();//no thread created
+		new Thread(Chapter7Util.OBJECT.new PrintData()).run();//no thread created
+		new Thread(Chapter7Util.OBJECT.new PrintData()).run();//no thread created
+		System.out.println("under  testRunMethodWithoutStart 2");
+	}
+	
+	public static void testPollingWithSleep() {
+		new Thread(() -> {
+			for(int i=0;i<100;i++) {
+				Chapter7Util.counter++;
+			}
+			
+		}).start();
+		
+		while(Chapter7Util.counter < 100) {
+			System.out.println("counter is less than 100");
+			try {
+				Thread.sleep(100);// this avoid possible infinit loop or super costly checking.
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}//throw InterruptedException
+		}
+		
+		if(Chapter7Util.counter == 100) {
+			System.out.println("counter is now 100");
+		}
+		
+		//assert false : "the program does not hang";
+		System.out.println("seems the program won't hang");
 	}
 	
 	public void method_1() { // instance method
@@ -110,53 +129,51 @@ public class Chapter7 {
 		localStaticInner.run();
 	}
 	
-	public static void executorTest() throws TimeoutException, InterruptedException, ExecutionException {
-		ExecutorService e = null;// not Executor
+	public static void testExecutorWithFuture() throws TimeoutException, InterruptedException, ExecutionException {
+		ExecutorService service = null;// not Executor
 		
 		try {
-			e = Executors.newSingleThreadExecutor();
+			service = Executors.newSingleThreadExecutor();
 			
 			System.out.println("begin");
-			e.submit(() -> System.out.println("Printing zoo inventory"));
-			Future<?> tc1 = e.submit(() -> {
+			service.submit(() -> System.out.println("Printing zoo inventory"));
+			Future<?> tc1 = service.submit(() -> {
 				for(int i=0;i<3;i++) {
 					System.out.println("Printing Record: " + i);
 				}
 			});
-			e.submit(() -> System.out.println("Printing zoo inventory"));
+			service.submit(() -> System.out.println("Printing zoo inventory"));
 			System.out.println("end");	
 			System.out.println("Future test isCancelled: " + tc1.isCancelled());
 			System.out.println("Future test get: " + tc1.get(1, TimeUnit.MILLISECONDS));
 			System.out.println("Future test isDone: " + tc1.isDone());
 		}  finally {
-			if(e != null) {
-				e.shutdown();
+			if(service != null) {
+				service.shutdown();
 				//System.out.println("calling shutDownNow() " + e.shutdownNow());
 				//e.execute(() -> System.out.println("Printing zoo inventory"));// Throw exception
 				
-				System.out.println("is shutdown(): " + e.isShutdown());
-				System.out.println("is terminated(): " + e.isTerminated());
+				System.out.println("is shutdown(): " + service.isShutdown());
+				System.out.println("is terminated(): " + service.isTerminated());
 			}
 		}
 		
-		if(e != null) {
-			e.awaitTermination(2, TimeUnit.SECONDS);
-			if(e.isTerminated()) {
+		if(service != null) {
+			service.awaitTermination(2, TimeUnit.SECONDS);
+			if(service.isTerminated()) {
 				System.out.println("all tasks are done");	
 			} else {
 				System.out.println("not all tasks are done");	
 			}
 		}
-		
-
 	}
 	
-	public void method_3() {
+	public static void testExecutorService () {
 		Chapter7Util.staticExecutor.submit(() -> System.out.println("static executor service"));
 		Chapter7Util.staticExecutor.shutdown();
 	}
 	
-	public void executorServiceUsingCallable() throws InterruptedException, ExecutionException {
+	public static void testexecutorServiceUsingCallable() throws InterruptedException, ExecutionException {
 		ExecutorService service = null;
 		service = Executors.newSingleThreadExecutor();
 		try {
@@ -188,9 +205,9 @@ public class Chapter7 {
 		service.shutdown();
 	}
 	
-	public void synchronizedTest() throws InterruptedException {
+	public static void testSynchronized() throws InterruptedException {
 		ExecutorService service = Executors.newFixedThreadPool(20);
-		SheepManager manager = new SheepManager();
+		SheepManager manager = Chapter7Util.OBJECT.new SheepManager();
 		for(int i=0;i<10;i++) {
 			synchronized (manager) {
 				service.submit(() -> manager.incrementCount());
@@ -225,8 +242,7 @@ public class Chapter7 {
 		synchronized (Chapter7.class) {
 			for(int i : list) {
 				//list.add(1); //un-synced iterator, even under synchronized block
-			}
-				
+			}			
 		}
 
 	}
@@ -277,10 +293,8 @@ public class Chapter7 {
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
-		
+		}		
 	}
-	
 	
 	private static void testCopyOnWrite( ) {
 		List<Integer> tc1 = new CopyOnWriteArrayList<Integer>(Arrays.asList(1,2,3,4,5));
