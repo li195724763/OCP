@@ -13,8 +13,8 @@ public class WhaleCalculator {
 	}
 	
 	public void processAllData(List<Integer> data) {
-		data.parallelStream().map(a -> processRecord(a)).forEach(System.out::println);
-		
+		//data.parallelStream().map(a -> processRecord(a)).forEach(System.out::println);
+		data.parallelStream().map(a -> processRecord(a)).count();//This completed immediatedly 
 	}
 
 	public static void main(String[] args) {

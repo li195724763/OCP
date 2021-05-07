@@ -7,7 +7,9 @@ import java.util.stream.Stream;
 
 /*DOES NOT COMPILE
  * Runnable tc2 = () -> 2;//DOES NOT COMPILE
- * 
+ * private AtomicDouble count = new AtomicInteger(0); // DOES NOT COMPILE, no AtomicDouble.
+ * new Thread(() -> System.out::print).start();// no value to print for method reference
+ * new Thread(() -> 1).start(); //Thread does not take Callable
  * */
 
 /*Throw Exception
@@ -33,27 +35,28 @@ public class Chapter7 {
 	}
 	
 	public class SheepManager{
-		private AtomicInteger count = new AtomicInteger(0); // need constructor
+		private AtomicInteger intcount = new AtomicInteger(0); // need constructor
 		
+		//private AtomicDouble count = new AtomicInteger(0); // DOES NOT COMPILE, no AtomicDouble.
 		//private Chapter7Util.OBJECT lock = new Chapter7Util.OBJECT();
 		private void incrementCount() {
 			//lock = new ArrayList<String>();
 			synchronized (SheepManager.class) {
-				System.out.println("count is : " + count.incrementAndGet());
+				System.out.println("count is : " + intcount.incrementAndGet());
 			}
 		}
 		
 	}
 	public static void main(String[] args) throws InterruptedException, InterruptedException, TimeoutException , ExecutionException {				
-		testMainThreadAndSeparateThread();
-		testRunMethodWithoutStart();
-		testPollingWithSleep();
+		testMainThreadAndSeparateThread();		
+		testRunMethodWithoutStart(); testPollingWithSleep();
+	
+		testExecutorService(); testexecutorServiceUsingCallable();
+		testExecutorWithFuture(); 
+		testExecutorInvokeAllInvokeAny();
 		
-		testExecutorService();
-		testexecutorServiceUsingCallable();
-		testExecutorWithFuture();
-		schedulerTest();
-		System.out.println("available process is : " + Runtime.getRuntime().availableProcessors());
+		testScheduler();
+		System.out.println("available process is : " + Runtime.getRuntime().availableProcessors());//get  number if CPU.
 		testSynchronized();
 		reproduceConcurrentException();
 		reproduceConcurrentExceptionOnList();
@@ -67,15 +70,22 @@ public class Chapter7 {
 		testCyclicBarrier();
 		System.out.println("Fraction number " + testRecursiveNumFraction(5));
 		testDeadLock();
-		
+		testUnorderedStream();
+		testArrayElementIncrement();
 	}
 	
 	public static void testMainThreadAndSeparateThread () {
 		System.out.println("main thread");
 		Runnable tc1 = () -> System.out.println("my first runnable after 10 years");	
+		Runnable tc2 = () -> Chapter7Util.counter++;	
+		Callable t3 = () -> Chapter7Util.counter++;	
 		tc1.run();	//no thread created
 			
-		new Thread(Chapter7Util.OBJECT.new PrintData()).start();
+		Thread tc4 = new Thread(Chapter7Util.OBJECT.new PrintData());
+		tc4.setPriority(Thread.MAX_PRIORITY);
+		tc4.start();
+		new Thread(() -> System.out.println(1)).start();
+		//new Thread(t3).start();DOES NOT COMPILE, Thread constructor does not take Callable
 		new ReadInventoryThread().start();
 	}
 	
@@ -113,23 +123,9 @@ public class Chapter7 {
 		System.out.println("seems the program won't hang");
 	}
 	
-	public void method_1() { // instance method
-		PrintData localInner = new PrintData();// created normally
-		localInner.run();
-		
-		ReadInventoryThread localStaticInner = new ReadInventoryThread();
-		localStaticInner.run();
-	}
 	
-	public static void method_2() {// static method
-		PrintData localInner = Chapter7Util.OBJECT.new PrintData();//created from the outter class Chapter7Util.OBJECT
-		localInner.run();
-		
-		ReadInventoryThread localStaticInner = new ReadInventoryThread();
-		localStaticInner.run();
-	}
-	
-	public static void testExecutorWithFuture() throws TimeoutException, InterruptedException, ExecutionException {
+	public static void testExecutorWithFuture() throws TimeoutException, InterruptedException, ExecutionException 
+	{
 		ExecutorService service = null;// not Executor
 		
 		try {
@@ -145,7 +141,7 @@ public class Chapter7 {
 			service.submit(() -> System.out.println("Printing zoo inventory"));
 			System.out.println("end");	
 			System.out.println("Future test isCancelled: " + tc1.isCancelled());
-			System.out.println("Future test get: " + tc1.get(1, TimeUnit.MILLISECONDS));
+			System.out.println("Future test get: " + tc1.get(1, TimeUnit.MILLISECONDS));//get throws 3 checked exception
 			System.out.println("Future test isDone: " + tc1.isDone());
 		}  finally {
 			if(service != null) {
@@ -168,6 +164,27 @@ public class Chapter7 {
 		}
 	}
 	
+	//TODO: need implementation: 
+	public static void testExecutorInvokeAllInvokeAny() throws ExecutionException {
+		ExecutorService service = Executors.newSingleThreadExecutor();
+		
+		List<Callable<String>> tasks = new ArrayList<>();
+		
+		for(int i=0;i<4;i++) {
+			tasks.add(() -> {System.out.println("testExecutorInvokeAllInvokeAny"); return "";});
+		}
+		
+		try {
+			service.invokeAny(tasks);
+			//service.invokeAll(tasks);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			service.shutdown();
+		}
+	}
+	
 	public static void testExecutorService () {
 		Chapter7Util.staticExecutor.submit(() -> System.out.println("static executor service"));
 		Chapter7Util.staticExecutor.shutdown();
@@ -176,32 +193,37 @@ public class Chapter7 {
 	public static void testexecutorServiceUsingCallable() throws InterruptedException, ExecutionException {
 		ExecutorService service = null;
 		service = Executors.newSingleThreadExecutor();
+		Runnable r = () -> Chapter7Util.UTILITY_INT = 11+22;
 		try {
 			//Future<Integer> tc1 = service.submit(() -> 11+22);
-			service.submit(() -> Chapter7Util.UTILITY_INT = 11+22);
-			service.submit(()-> System.out.println("calling executorServiceUsingCallable and the result is : " + Chapter7Util.UTILITY_INT));
-			//WHY use a separate runnable result out in UTILITY_INT IS 0?????
+			//service.submit(() -> Chapter7Util.UTILITY_INT = 11+22);
+			service.submit(r);
+			Thread.sleep(10);
+			//service.submit(()-> System.out.println("calling executorServiceUsingCallable and the result is : " + Chapter7Util.UTILITY_INT));
+			System.out.println("calling executorServiceUsingCallable and the result is : " + Chapter7Util.UTILITY_INT);
+			//WHY use a separate runnable result out in UTILITY_INT IS 0?????Since the order of the indenpendent task and main task are not guarunteed!!! 
 		}finally {
 			service.shutdown();
 		}
 	}
 	
-	@SuppressWarnings("unchecked")
-	public static void schedulerTest() {
+	public static void testScheduler() throws InterruptedException {
 		ScheduledExecutorService service = null;
 		service = Executors.newSingleThreadScheduledExecutor();
 		
-		Callable<?> call = () -> {System.out.println("this is a callable"); return null;};
+		Callable<?> call = () -> {System.out.println("testScheduler_this is a callable"); return null;};
 		
-		Runnable run = () -> System.out.println("this is a runnable");
+		Runnable run = () -> System.out.println("testScheduler_this is a runnable");
 		//Runnable scheduledRun = () -> System.out.println("this is a schduled runnable");
 		
 		service.schedule(call, 1, TimeUnit.SECONDS);
 		service.schedule(run, 1, TimeUnit.SECONDS);
 		
-		service.scheduleAtFixedRate(() -> System.out.println("I love you April"), 1, 3,  TimeUnit.SECONDS);		
-		service.scheduleWithFixedDelay(() -> System.out.println("MUAAAA"), 1, 5, TimeUnit.SECONDS);	
-		service.scheduleWithFixedDelay(() -> System.out.println("尿妈妈， 尿妈妈， 尿妈妈！！！！"), 1, 10, TimeUnit.SECONDS);
+		service.scheduleAtFixedRate(() -> System.out.println("*******I love you April"), 1, 3,  TimeUnit.SECONDS);		
+		service.scheduleWithFixedDelay(() -> System.out.println("*****MUAAAA"), 1, 5, TimeUnit.SECONDS);	
+		service.scheduleWithFixedDelay(() -> System.out.println("*******尿妈妈， 尿妈妈， 尿妈妈！！！！"), 1, 10, TimeUnit.SECONDS);
+		Thread.sleep(100);
+		//service.shutdownNow();//this will cause no submitted task to be executed
 		service.shutdown();
 	}
 	
@@ -275,9 +297,9 @@ public class Chapter7 {
 		BlockingQueue<Integer> tc1 = new LinkedBlockingQueue<>();
 		BlockingDeque<Integer> tc2 = new LinkedBlockingDeque<>();
 		try {
-			tc1.offer(1, 10, TimeUnit.MILLISECONDS);
+			tc1.offer(1, 10, TimeUnit.SECONDS);//wait up to 10 seconds, if the thread is available then add right away.
 			System.out.println("Testing LinkedBlockingQueue with calling peek: " + tc1.peek());
-			System.out.println("Testing LinkedBlockingQueue with calling poll: " + tc1.poll(10, TimeUnit.MILLISECONDS));
+			System.out.println("Testing LinkedBlockingQueue with calling poll: " + tc1.poll(10, TimeUnit.SECONDS));
 			
 			tc2.offer(1);
 			tc2.offerFirst(2, 1, TimeUnit.MICROSECONDS);
@@ -378,9 +400,11 @@ public class Chapter7 {
 		ExecutorService service = Chapter7Util.getExecutorServicce(4);
 		CyclicBarrier c1 = new CyclicBarrier(4);//4 means I need 4 thread in total and then I can release the barrier, hanged if the number of barrier is greater than the totoal number of thread.
 		CyclicBarrier c2 = new CyclicBarrier(4, () -> System.out.println("pen cleaned!!!"));
+		CyclicBarrier c3 = new CyclicBarrier(4, () -> System.out.println("for re-use!!!"));
 		
 		for(int i=0;i<4;i++) {
-			service.submit(() ->  testCyclicBarrierProcess(c1, c2));
+			//service.submit(() ->  testCyclicBarrierProcess(c1, c2));
+			service.submit(() ->  testReuseCyclicBarrierProcess(c3));//submit start a new Thread, here we start 4 threads
 		}
 		service.shutdown();
 	}
@@ -388,9 +412,23 @@ public class Chapter7 {
 	public static void testCyclicBarrierProcess(CyclicBarrier c1, CyclicBarrier c2) {		
 		try {
 			testCyclicBarrierRemoveAnimal();
+			//new CyclicBarrier(2).await();//hangs here
 			c1.await();
 			testCyclicBarrierCleanPen();
 			c2.await();
+			testCyclicBarrierAddAnial();
+		} catch (InterruptedException | BrokenBarrierException e) {
+			e.printStackTrace();
+		} 
+	}
+	
+	public static void testReuseCyclicBarrierProcess(CyclicBarrier c1) {		
+		try {
+			testCyclicBarrierRemoveAnimal();
+			//new CyclicBarrier(2).await();//hangs here
+			c1.await();
+			testCyclicBarrierCleanPen();
+			c1.await();
 			testCyclicBarrierAddAnial();
 		} catch (InterruptedException | BrokenBarrierException e) {
 			e.printStackTrace();
@@ -456,6 +494,28 @@ public class Chapter7 {
 			service.shutdown();
 		}
 		
+	}
+	
+	public void testInnerClassObjectCreation() { // instance method
+		PrintData localInner = new PrintData();// created normally	
+		ReadInventoryThread localStaticInner = new ReadInventoryThread();
+	}
+	
+	public static void testInnerClassObjectCreationUnderStaticMethod() {// static method
+		PrintData localInner = Chapter7Util.OBJECT.new PrintData();//created from the outter class Chapter7Util.OBJECT
+		ReadInventoryThread localStaticInner = new ReadInventoryThread();
+	}
+	
+	public static void testUnorderedStream() {
+		Stream.of(1,2,3,4,5).unordered().forEach(System.out::println);
+		
+		Stream.of(1,2,3,4,5).parallel().unordered().forEach(System.out::println);
+	}
+	
+	public static void testArrayElementIncrement() {
+		int[] array = new int[] {0};
+		
+		System.out.println("testArrayElementIncrement: " + ++array[0]);
 	}
 
 }

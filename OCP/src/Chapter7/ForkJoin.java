@@ -39,23 +39,26 @@ public class ForkJoin extends RecursiveAction{
 	}
 	
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-		
 		Double[] weights = new Double[10];
 		
+		//*****************RecursiveAction*********************
 		ForkJoinTask<?> task1 = new ForkJoin(weights, 0, weights.length);
 		ForkJoinPool pool_1 = new ForkJoinPool();
 		//pool_1.invoke(task1);
 		
 		//*****************RecursiveTask*********************
-		double[] weights2 = new double[10];
+		long start = System.currentTimeMillis();
+		double[] weights2 = new double[10000];
 		ForkJoin tc4 = new ForkJoin(weights, 0, weights.length);
 		//ForkJoinRecursiveTask tc5 = tc2.new ForkJoinRecursiveTask(weights2, 0, 10);DOES NOT COMPILE if ForkJoinTask is a super class of ForkJoin
-		ForkJoinRecursiveTask task_2 = tc4.new ForkJoinRecursiveTask(weights2, 0, 10);
-		ForkJoinPool pool_2 = new ForkJoinPool();
+		ForkJoinRecursiveTask task_2 = tc4.new ForkJoinRecursiveTask(weights2, 0, weights2.length);
+		
+		ForkJoinPool pool_2 = new ForkJoinPool();		
+		
 		Double sum = pool_2.invoke(task_2);
 		System.out.println("******the totoal sum is: " + sum);
-		
+		long end = (System.currentTimeMillis()-start);
+		System.out.println("\n" + end + " milliseconds" );
 
 	}
 	
