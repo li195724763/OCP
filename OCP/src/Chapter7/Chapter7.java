@@ -2,6 +2,7 @@ package Chapter7;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -39,19 +40,21 @@ public class Chapter7 {
 		
 		//private AtomicDouble count = new AtomicInteger(0); // DOES NOT COMPILE, no AtomicDouble.
 		//private Chapter7Util.OBJECT lock = new Chapter7Util.OBJECT();
-		private void incrementCount() {
+		private void incrementCountWithAtomicClass() {
 			//lock = new ArrayList<String>();
-			synchronized (SheepManager.class) {
-				System.out.println("count is : " + intcount.incrementAndGet());
-			}
+			//synchronized (SheepManager.class) {
+			System.out.println("count is : " + intcount.incrementAndGet());
+		
 		}
 		
 	}
 	public static void main(String[] args) throws InterruptedException, InterruptedException, TimeoutException , ExecutionException {				
 		testMainThreadAndSeparateThread();		
-		testRunMethodWithoutStart(); testPollingWithSleep();
+		testRunMethodWithoutStart(); 
+		testPollingWithSleep();
 	
-		testExecutorService(); testexecutorServiceUsingCallable();
+		testExecutorService(); 
+		testexecutorServiceUsingCallable();
 		testExecutorWithFuture(); 
 		testExecutorInvokeAllInvokeAny();
 		
@@ -72,13 +75,15 @@ public class Chapter7 {
 		testDeadLock();
 		testUnorderedStream();
 		testArrayElementIncrement();
+		testRunnableOrCallable();
+		printSomething();
 	}
 	
 	public static void testMainThreadAndSeparateThread () {
 		System.out.println("main thread");
 		Runnable tc1 = () -> System.out.println("my first runnable after 10 years");	
 		Runnable tc2 = () -> Chapter7Util.counter++;	
-		Callable t3 = () -> Chapter7Util.counter++;	
+		Callable<Integer> t3 = () -> Chapter7Util.counter++;	
 		tc1.run();	//no thread created
 			
 		Thread tc4 = new Thread(Chapter7Util.OBJECT.new PrintData());
@@ -197,10 +202,15 @@ public class Chapter7 {
 		try {
 			//Future<Integer> tc1 = service.submit(() -> 11+22);
 			//service.submit(() -> Chapter7Util.UTILITY_INT = 11+22);
+			Runnable run = () -> Chapter7Util.counter++;
 			service.submit(r);
+			Future<?> tc1 = service.submit(() -> Chapter7Util.counter++);	
+			Future<?> tc2 = service.submit(run);	
 			Thread.sleep(10);
 			//service.submit(()-> System.out.println("calling executorServiceUsingCallable and the result is : " + Chapter7Util.UTILITY_INT));
 			System.out.println("calling executorServiceUsingCallable and the result is : " + Chapter7Util.UTILITY_INT);
+			System.out.println("calling executorServiceUsingCallable and the Future<?> t1 result is : " + tc1.get());
+			System.out.println("calling executorServiceUsingCallable and the Future<?> t2 result is : " + tc2.get());
 			//WHY use a separate runnable result out in UTILITY_INT IS 0?????Since the order of the indenpendent task and main task are not guarunteed!!! 
 		}finally {
 			service.shutdown();
@@ -230,11 +240,11 @@ public class Chapter7 {
 	public static void testSynchronized() throws InterruptedException {
 		ExecutorService service = Executors.newFixedThreadPool(20);
 		SheepManager manager = Chapter7Util.OBJECT.new SheepManager();
-		for(int i=0;i<10;i++) {
-			synchronized (manager) {
-				service.submit(() -> manager.incrementCount());
-			}
-			//Thread.sleep(100);
+		for(int i=0;i<20;i++) {
+			//synchronized (manager) { // this does not synchronize the task.
+				service.submit(() -> manager.incrementCountWithAtomicClass());
+			//}
+			Thread.sleep(10);
 		}	
 			
 		service.shutdown();
@@ -297,9 +307,9 @@ public class Chapter7 {
 		BlockingQueue<Integer> tc1 = new LinkedBlockingQueue<>();
 		BlockingDeque<Integer> tc2 = new LinkedBlockingDeque<>();
 		try {
-			tc1.offer(1, 10, TimeUnit.SECONDS);//wait up to 10 seconds, if the thread is available then add right away.
+			tc1.offer(1, 10, TimeUnit.HOURS);//wait up to 10 seconds, if the thread is available then add right away.
 			System.out.println("Testing LinkedBlockingQueue with calling peek: " + tc1.peek());
-			System.out.println("Testing LinkedBlockingQueue with calling poll: " + tc1.poll(10, TimeUnit.SECONDS));
+			System.out.println("Testing LinkedBlockingQueue with calling poll: " + tc1.poll(10, TimeUnit.MINUTES));
 			
 			tc2.offer(1);
 			tc2.offerFirst(2, 1, TimeUnit.MICROSECONDS);
@@ -365,7 +375,7 @@ public class Chapter7 {
 		System.out.println(Arrays.asList(1,2,3,4,5).parallelStream().findAny()); //result is not predicatable.
 		
 		Stream<Character> tc1 = Stream.of('w', 'o', 'l', 'f').parallel(); 
-		System.out.println(tc1.reduce("" , (c , s1) -> c+s1, (s2,s3) -> s2 + s3)); //follow rule number 1: identity is not affecting the result
+		System.out.println(tc1.reduce("" , (String s1 , Character c) -> c+s1, (s2,s3) -> s2 + s3)); //follow rule number 1: identity is not affecting the result
 		
 		Stream<Character> tc2 = Stream.of('w', 'o', 'l', 'f').parallel(); 
 		System.out.println(tc2.reduce("X" , (c , s1) -> c+s1, (s2,s3) -> s2 + s3)); //breaking rule number 1 , E.g. : XwXoXlXf
@@ -378,7 +388,9 @@ public class Chapter7 {
 	}
 	
 	public static void testParallelCollector() {
-		Stream<String> tc1 = Stream.of("w", "o", "l", "f").parallel();
+		Stream<String> tc1 = Stream.of("W","O", "L", "F").parallel();
+		System.out.println(Stream.of("W","O", "L", "F").parallel().collect(() -> new ConcurrentSkipListSet<String>(), (ConcurrentSkipListSet<String> set1, String s1) -> set1.add(s1), (ConcurrentSkipListSet<String> set2, ConcurrentSkipListSet<String> set3)-> set2.addAll(set3)));
+		
 		System.out.println(tc1.collect(ConcurrentSkipListSet::new, Set::add, Set::addAll));
 		
 		Stream<String> tc2 = Stream.of("lion", "tiger", "bear").parallel();
@@ -516,6 +528,30 @@ public class Chapter7 {
 		int[] array = new int[] {0};
 		
 		System.out.println("testArrayElementIncrement: " + ++array[0]);
+	}
+	
+	public static void testRunnableOrCallable() throws InterruptedException, ExecutionException {
+		ExecutorService service = null;
+		service = Executors.newSingleThreadExecutor();
+		Future<?> result = service.submit(() -> {
+			for(int i=0;i<100;i++) { // with 
+				Chapter7Util._count++;
+			}
+		});
+		
+		System.out.println("testRunnableOrCallable Future result.get() is " + result.get());
+		
+		service.shutdown();
+	}
+	
+	public static void testAtomicReference() {
+		String s = new String("abc"); 
+		AtomicReference ar = new AtomicReference(s);
+	}
+	
+	
+	public static void printSomething() {
+		System.out.println("Print something after everything");
 	}
 
 }
