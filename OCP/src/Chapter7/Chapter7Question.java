@@ -4,6 +4,7 @@ import java.util.concurrent.*;
 import java.util.stream.*; 
 
 public class Chapter7Question {
+	static int count = 0;
 
 	public static void main(String[] args) throws InterruptedException, ExecutionException{
 		// TODO Auto-generated method stub
@@ -12,8 +13,8 @@ public class Chapter7Question {
 		 //IntStream.range(0, 10) .forEach(i -> results.add( service.submit(() -> performCount(i))));
 		 //results.stream().forEach(f -> printResults(f)); 
 		 service.shutdown();
-		 
 		 testFuture();
+		 testQuestion_22();
 	}
 	
 	public static Integer performCount(int exhibitNumber) {
@@ -49,6 +50,23 @@ public class Chapter7Question {
 	
 	public static int ThrowException() throws Exception {
 		throw new Exception("ThrowException");
+	}
+	
+	public static void testQuestion_22() {
+		ExecutorService service = Executors.newSingleThreadExecutor();
+		List<Future<?>> results = new ArrayList<>();
+		
+		IntStream.iterate(0, i -> ++i).limit(5).forEach(i -> results.add(service.submit(() -> {count++;})));
+		
+		for(Future<?> result : results) {
+			try {
+				System.out.println(result.get());
+			} catch (InterruptedException | ExecutionException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
 	}
 
 }

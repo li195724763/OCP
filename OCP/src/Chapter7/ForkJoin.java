@@ -8,6 +8,37 @@ import java.util.concurrent.RecursiveTask;
 
 public class ForkJoin extends RecursiveAction{
 	
+	/******member inner class*/
+	public class ForkJoinRecursiveTask extends RecursiveTask<Double>{
+		double[] weights;
+		int start;
+		int end;
+		
+		public ForkJoinRecursiveTask (double[] weights, int start, int end) {
+			this.weights = weights;
+			this.end = end;
+			this.start = start;
+		}
+		@Override
+		protected Double compute() {
+			double sum = 0;
+			if(end-start <=3 ) {
+				for(int i=start;i<end;i++) {
+					sum = sum + new Random().nextInt(100);
+				}
+				System.out.println("*****idenpendent sum is " + sum);
+			} else {
+				int middle = start + (end - start)/2;
+				RecursiveTask<Double> otherTask = new ForkJoinRecursiveTask(weights, start, middle);
+				otherTask.fork();
+				System.out.println("start is: " + start + " middle is :" + middle + " end is : " + end);
+				return new ForkJoinRecursiveTask(weights, middle, end).compute() + otherTask.join();
+			}
+			
+			return sum;
+		}
+	}
+	
 	
 	
 	private Double[] weight;
@@ -50,49 +81,19 @@ public class ForkJoin extends RecursiveAction{
 		long start = System.currentTimeMillis();
 		double[] weights2 = new double[10000];
 		ForkJoin tc4 = new ForkJoin(weights, 0, weights.length);
-		//ForkJoinRecursiveTask tc5 = tc2.new ForkJoinRecursiveTask(weights2, 0, 10);DOES NOT COMPILE if ForkJoinTask is a super class of ForkJoin
-		ForkJoinRecursiveTask task_2 = tc4.new ForkJoinRecursiveTask(weights2, 0, weights2.length);
-		
-		ForkJoinPool pool_2 = new ForkJoinPool();		
-		
+		ForkJoinRecursiveTask tc5 = tc4.new ForkJoinRecursiveTask(weights2, 0, 10);//DOES NOT COMPILE if ForkJoinTask is a super class of ForkJoin,
+		                //since ForkJoinRecursiveTask is an inner class of ForkJoin, and has no nested relationship with ForkJoinTask(provided by java.util.concurrent)
+	    ForkJoinRecursiveTask task_2 = tc4.new ForkJoinRecursiveTask(weights2, 0, weights2.length);
+		  
+		ForkJoinPool pool_2 = new ForkJoinPool();
+		  
 		Double sum = pool_2.invoke(task_2);
-		System.out.println("******the totoal sum is: " + sum);
-		long end = (System.currentTimeMillis()-start);
-		System.out.println("\n" + end + " milliseconds" );
-
-	}
-	
-	
-	public class ForkJoinRecursiveTask extends RecursiveTask<Double>{
-		double[] weights;
-		int start;
-		int end;
 		
-		public ForkJoinRecursiveTask (double[] weights, int start, int end) {
-			this.weights = weights;
-			this.end = end;
-			this.start = start;
-		}
-		@Override
-		protected Double compute() {
-			double sum = 0;
-			if(end-start <=3 ) {
-				for(int i=start;i<end;i++) {
-					sum = sum + new Random().nextInt(100);
-				}
-				System.out.println("*****idenpendent sum is " + sum);
-			} else {
-				int middle = start + (end - start)/2;
-				RecursiveTask<Double> otherTask = new ForkJoinRecursiveTask(weights, start, middle);
-				otherTask.fork();
-				System.out.println("start is: " + start + " middle is :" + middle + " end is : " + end);
-				return new ForkJoinRecursiveTask(weights, middle, end).compute() + otherTask.join();
-			}
-			
-			return sum;
-		}
-	}
-	
+		  System.out.println("******the totoal sum is: " + sum); long end =
+		  (System.currentTimeMillis()-start); System.out.println("\n" + end +
+		  " milliseconds" );
+		 
 
+	}
 
 }
