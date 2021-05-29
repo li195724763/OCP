@@ -275,8 +275,6 @@ public class Chapter4 {
 		  return
 				  Optional.of(s.length()); 
 		  }
-
-	
 	/*
 	 * static int calculator(String s) { return s.length(); }
 	 */

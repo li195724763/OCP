@@ -5,23 +5,45 @@ import java.util.function.*;
 
 //class generic<?>{} DOES NOT COMPILE
 //class Generic1<T extends B>{} DOES NOT COMPILE, since B is not a defined class
-//class generic2<? extends Exception>{}  DOES NOT COMPILE
+//class generic2<? extends Exception>{} // DOES NOT COMPILE, should be class generic2<B extends Exception>{}
 
 class GenericTrick<IOException>{} //A EVIL TRICK!!!!!!!!!!!!!!!!a compiler warning is generated, saying generic name IOException hiding the type IOException.
 class Generic<T extends B, B>{// the parameter you are passing in, a T must be a subclass of, or implements B	
 	public Generic(T t, B b) {}} 
 
-//class Generic2<X super Double, B>{}//DOES NOT COMPILE
+//class Generic2<X super Double, B>{}//DOES NOT COMPILE, class Generic2<X extends Double, B>{} // compiles 
 
 class Generic5<X extends B, B>{}
 
+/*****implement a generic interface*****/
 interface Shippable <T>{ };
-
 class Generic3 implements Shippable<Exception>{}//NO LONGER A GENERIC CLASS
 
 class Generic4<U> implements Shippable<U> {}
 
 class Generic6 implements Shippable{}// warning here
+
+/***Comparable and Comparator***/
+
+class testComparator implements Comparator<testComparator> {
+
+	@Override
+	public int compare(testComparator o1, testComparator o2) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+	
+}
+
+class testComparable implements Comparable<testComparable> {
+
+	@Override
+	public int compareTo(testComparable o) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+	
+}
 
 interface myFunctionalInterface {
 	Chapter3 getChapter3(String id, String name);
@@ -35,7 +57,12 @@ public class Chapter3<T> implements Comparable<Chapter3>{
 		this.id = id;
 		this.name = name;
 	}
-	//static <?> void myMethod() {} // DOES NOT COMPILE, <XXX> will compile
+	/**DOES NOT COMPILE,**/
+	//static <?> void myMethod() {}//does not support wild card before return type
+	//static <? extends super> void myMethod() {}//does not support wild card before return type
+	//static <T super Exception> void myMethod() {}//does not support Lower-bound 
+	static <T> void myMethod(T t) {}
+	void myInstanceMethod(T t) {}
 
 	public static <T> void main(String args[]) {
 		/*Collection*/
@@ -44,6 +71,11 @@ public class Chapter3<T> implements Comparable<Chapter3>{
 		testMap();
 		testSet();
 		testReplaceAll();
+		testStack();
+		Chapter3.<Exception>myMethod(new Exception());//compiles
+		myMethod(new Exception());//compiles
+		//<Exception>myMethod(new Exception());//does not compile
+		//<Exception>.myMethod(new Exception());//does not compile
 		
 		/*Generic*/
 		testCreatingGenericInstance();	
@@ -52,6 +84,7 @@ public class Chapter3<T> implements Comparable<Chapter3>{
 		testReceiveRawCollection();//pass a raw collection into a generic method may cause exception.
 		
 		/*Comparator Comparable MethodReference MergeMap*/
+		testComparable();
 		testComparator();
 		testMethodReference();
 		testMapMerge();		
@@ -63,10 +96,18 @@ public class Chapter3<T> implements Comparable<Chapter3>{
 		//tc1.element();Throw NoSuchElementException
 		//tc1.remove();Throw NoSuchElementException
 		//tc1.pop();Throw NoSuchElementException
+		tc1.add("abc");
+		//tc1.add(null);Throw NPE. since null is part of the return protocol for some methods like poll() peek() pop, adding null will break it. 
 		
 		Queue<Integer> tc16 = new ArrayDeque<>();
 		tc16.add(1);
-		//tc16.add(null);//THROW EXCEPTION due to null in ArrayDeque.
+
+		
+		Queue<Integer> tc17 = new ArrayDeque<>(0);
+		tc17.offer(1);
+		tc17.offer(2);
+		tc17.offer(3);
+		System.out.println("testArrayDeque: " + tc17);
 	}
 	
 	public static void testList() {
@@ -76,6 +117,7 @@ public class Chapter3<T> implements Comparable<Chapter3>{
 		
 		List<Exception> tc3 = new ArrayList<Exception>();
 		tc3.add(new IOException("aaa"));
+		tc3.get(0);
 		
 		List<Exception> tc9 = new ArrayList<>();
 		tc9.add(new IOException("aaa"));//You can add an IOException since IOException "is-a" Exception.
@@ -148,7 +190,8 @@ public class Chapter3<T> implements Comparable<Chapter3>{
 		 */
 		List<? extends String> upperbound = new ArrayList<>();
 		//upperbound.add("aa");//DOES NOT COMPILE, upperbound becomes immutable. 
-		List<? super Exception> lowerbound = new ArrayList<>();
+		List<? super IOException> lowerbound = new ArrayList<>();
+		lowerbound.add(new IOException());
 		List<String> tc10 = new ArrayList<>();
 		tc10.add("index0");
 		List<? extends String> tc11 = new ArrayList<String>(tc10);
@@ -197,7 +240,7 @@ public class Chapter3<T> implements Comparable<Chapter3>{
 		List<? super Exception> tc12 = new ArrayList<>();
 		Iterator tc12iter = tc12.iterator();//warning here
 		while(tc12iter.hasNext()) {
-			//Exception iE = tc12iter.next();//DOES NOT COMPILE if no cast, due to type mismatch.
+			//Exception iE = tc12iter.next();//DOES NOT COMPILE if no cast, due to type mismatch, since tc12iter.next() returns an Object
 		}	
 	} 
 	
@@ -235,8 +278,8 @@ public class Chapter3<T> implements Comparable<Chapter3>{
 		}
 	}
 	
-	public static void testComparator() {
-		ArrayList<Chapter3> tc17 = new ArrayList<Chapter3>();
+	public static void testComparable() {
+		ArrayList<Chapter3> tc17 = new ArrayList<>();
 		tc17.add(new Chapter3("1", "Ella"));
 		tc17.add(new Chapter3("2", "Lara"));
 		tc17.add(new Chapter3("3", "Erica"));
@@ -248,6 +291,21 @@ public class Chapter3<T> implements Comparable<Chapter3>{
 		Collections.sort(tc17, tc18);
 		System.out.println("the order of chapter3 Chapter7Util.OBJECT based on Comparator is: " + tc17);
 		ship(tc17);//A function with parameter List<?> can take any type implements List, like tc17 is ArrayList<Chapter3>
+	}
+	
+	public static void testComparator() {
+		ArrayList<testComparator> comparatorList = new ArrayList<>();
+		ArrayList<testComparable> comparableList = new ArrayList<>();
+		
+		Collections.sort(comparableList);
+		
+		//Collections.sort(comparatorList); //DOES NOT COMPLILE since testComparator didn't implement Comparable
+		
+		TreeSet<testComparator> treeSetComparator = new TreeSet<>();
+		//treeSetComparator.add(new testComparator());throw exception since testComparator didn't implement Comparable
+		
+		TreeSet<testComparable> treeSetComparable = new TreeSet<>();
+		treeSetComparable.add(new testComparable());//no exception, since testComparable implemented Comparable.
 	}
 	
 	public static void ship(List<?> ls) {}
@@ -263,8 +321,13 @@ public class Chapter3<T> implements Comparable<Chapter3>{
 
 		Supplier<ArrayList> tc25 = () -> new ArrayList<>();
 		Supplier<ArrayList<Integer>> tc26 = ArrayList :: new; // create an instance by using constructor
-		myFunctionalInterface tc27 = Chapter3  :: new ;
-		tc27.getChapter3("123", "456");
+		
+		myFunctionalInterface tc27 = Chapter3  :: new ;//create an custom instance with method reference.
+		tc27.getChapter3("123", "456");// the getChapter3 method set the parameters used in the Constructor of Chapter3.
+		
+		System.out.println("testMethodReference: " + tc27.getChapter3("123", "456").id);
+		
+		BiConsumer<Set<String>, Set<String>> bo = Set::addAll; //(Set<String> s1, Set<String> s2) -> s1.addAll(s2);
 	}
 	
 	public static void testMapMerge() {
@@ -280,6 +343,19 @@ public class Chapter3<T> implements Comparable<Chapter3>{
 		
 		System.out.println("Map merge() test1 : " + tc28);
 	}	
+	
+	public static void testStack() {
+		Stack<Integer> stack = new Stack<>();
+		for(int i=0;i<100;i++) {
+			stack.add(i);
+		}
+		
+		Iterator<Integer> iter = stack.iterator();
+		
+		while(iter.hasNext()) {
+			System.out.println("testStack: " + iter.next());
+		}
+	}
 	
 	@Override public int compareTo(Chapter3 c) {
 		return 
