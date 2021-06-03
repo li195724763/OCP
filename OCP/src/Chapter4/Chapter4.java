@@ -49,7 +49,9 @@ public class Chapter4 {
 		
 		Chapter4.bConsumer(chapter4Obj -> System.out.println(Chapter4.id), Chapter4.id);
 		 
-		Consumer<String> tc63 = x -> {new String();};
+		Consumer<String> tc63 = x -> new String();
+		Consumer<String> tc64 = x -> {new String();};
+		//Consumer<String> tc65 = x -> {return new String();};//Does not compile
 	}
 	
 	static void testBiConsumer() {
@@ -76,6 +78,10 @@ public class Chapter4 {
 		Function<Integer, Integer> tc64 = x -> x*x; //a Function type functional interface needs to define two generic parameters
 		
 		BiFunction<String, String, Boolean> tc66 = String::startsWith;
+		
+		BiFunction rawType = (s1,s2) -> true;
+		//BiFunction rawType_2 = (s1,s2) -> s1.startsWith(s2);//Does not compile
+		BiFunction<String, String, Boolean> notRawType = (s1,s2) -> s1.startsWith(s2);
 	}
 	
 	static void testStreamCreation() {
@@ -84,10 +90,6 @@ public class Chapter4 {
 		//tc6.forEach(System.out::println); //infinit output
 		Stream<Integer> tc7 = Stream.iterate(1, n -> n = n + 1);
 		//tc7.forEach(System.out::println);//infinit output
-		
-		Stream<String> tc8 = Stream.of("ape", "baby", "Flamigo");
-		Optional<String> tc9 = tc8.min((tc8_1, tc8_2) -> tc8_1.length() - tc8_2.length());// min() takes a Comparator, which is also a functional interface
-		tc9.ifPresent(System.out::println);
 		
 		Stream<String> tc10 = Stream.of("first5", "first2", "first3");
 		System.out.print("testStreamCreation: ");
@@ -99,9 +101,38 @@ public class Chapter4 {
 		Stream<String> tc12 = Stream.generate(() -> "tc12 case");
 		//System.out.println(tc12.anyMatch(tc12_1 -> Character.isLetter(tc12_1.charAt(0))));
 		System.out.println("NoneMatch test: " + tc12.noneMatch(tc12_1 -> Character.isLetter(tc12_1.charAt(0)))); //IllegalStateException, if calling terminate function twice.
+		
+		List<Integer> intList = new ArrayList<>();
+		for(int i=0;i<10;i++) {
+			intList.add(i);
+		}
+		
+		Stream<Integer> consistentInt = intList.stream();
+
+		intList.add(11);
+		consistentInt.forEach(System.out::print);// output 012345678911, since Stream and list are consistent. 
+		System.out.println("");
+		
+		Stream.iterate(1, x -> ++x).limit(5).forEach(System.out::print); //this print 123456.
+		System.out.println("");
+		
+		Stream.iterate(1, x -> x++).limit(5).forEach(System.out::print); //this print 123456.
+		System.out.println("");
+		
 	}
 	
 	static void testStreamReduction() {
+		 //Single parameter reduce: Accumulator type is the same as Stream element type.
+		System.out.println("Test single parameter reduce(): " + Stream.of(1,3,5).reduce((Integer i1, Integer i2) -> i1*i2).get());
+
+		//Doube parameters reduce: Accumulator type is the same as Stream element type.
+		System.out.println("double parameter reduce(): " + 
+				Stream.of('F','O','D').reduce('A', (Character c1, Character c2) -> c1)); 
+
+		//three parameter reduce:
+		System.out.println("tree parameters reduce(): " + 
+		Stream.of('W', 'O', 'L', 'F').reduce("", (String s, Character c) -> s + c, (String s1, String s2) -> s1 + s2 ));
+		
 		BinaryOperator<Integer> op = (op1, op2) -> op1 * op2;
 		Stream<Integer> tc13 = Stream.of(1,3,5);
 		System.out.println(tc13.reduce(1, op, op));
@@ -120,7 +151,7 @@ public class Chapter4 {
 		
 		Stream<Integer> tc31 = Stream.of(1,3,4,5);
 		if(tc31.reduce(0, (tc20_1, tc20_2) -> tc20_1 + tc20_2) instanceof Integer) {
-			System.out.println("reduce with identifier return Chapter7Util.OBJECT type"); //reduce with identifier
+			System.out.println("reduce with identifier return Object type"); //reduce with identifier
 		};
 		//tc31.reduce((tc20_1, tc20_2) -> tc20_1 + tc20_2).ifPresent(System.out::println); //reduce without identifier
 		
@@ -150,7 +181,8 @@ public class Chapter4 {
 		
 	    Stream<String> tc39 = Stream.of("first", "second", "aaaaa", "asdfsaf");
 	    //System.out.println(tc39.collect(Collectors.averagingDouble(String::length)).doubleValue());
-	    TreeMap<Integer, String> tc40 = tc39.collect(Collectors.toMap(String::length, tc39_1->tc39_1, (tc39_2, tc39_3) -> tc39_2 + ", " + tc39_3, TreeMap::new));
+	    TreeMap<Integer, String> tc40 = tc39.collect(Collectors.toMap(String::length, value -> value, (String s1, String s2) -> s1 + ", " + s2, TreeMap::new));
+	    //BinaryOperator define the merge function, Supplier defined the overall return type
 	    System.out.println("to map() test: " + tc40);
 	    
 	    Stream<String> tc41= Stream.of("first", "second", "aaaaa", "asdfsaf");
@@ -166,7 +198,7 @@ public class Chapter4 {
 	    System.out.println("partitioning by test: " + tc48);
 	    
 	    Stream<String> tc49 = Stream.of("first", "second", "aaaaa", "asdfsaf");
-	    Map<Integer, Optional<Character>> tc50 = tc49.collect(Collectors.groupingBy(String::length, Collectors.mapping(tc49_2 -> tc49_2.charAt(0), 
+	    Map<Integer, Optional<Character>> tc50 = tc49.collect(Collectors.groupingBy(String::length, Collectors.mapping((String s) -> s.charAt(0), 
 	    		Collectors.minBy(Comparator.naturalOrder())))); 
 	    System.out.println("idk: " + tc50);
 	    
@@ -174,15 +206,17 @@ public class Chapter4 {
 	    Stream<Integer> tc59 = Stream.of(1,3,5);
 	    Double tc60 = tc59.collect(Collectors.averagingDouble(tc59_1 -> tc59_1));
 	    
-	    Stream<String> tc61 = Stream.iterate("", tc61_1 -> tc61_1 + "a");
+	    Stream<String> tc61 = Stream.iterate("", (String s) -> s + "a");
 	    Map<Integer,Long> tc62 = tc61.limit(5).collect(Collectors.groupingBy(String::length, Collectors.counting()));
 	    System.out.println("grouping by : " + tc62);
+	    
+	    long count = Stream.of(1,3,5).collect(Collectors.counting());
 	}
 	
 	static void testStreamMap() {
 		Stream<String> tc23 = Stream.of("asghtjiogereigrl", "asdfcxz", "sdgthjfol");
-		tc23.map(String::length);
-		//tc23.map(tc23_1 -> tc23_1.length()).forEach(System.out::println);//Exception !!! since using intermidate method twice.
+		//tc23.map(String::length);
+		tc23.map((String s) -> s.length()).forEach(System.out::println);//Exception !!! since using intermidate method twice.
 		
 		Stream<Integer> tc32 = Stream.of(413,3452,1235,12111);
 		//tc32.mapToInt(tc32_1 -> tc32_1);
@@ -190,6 +224,8 @@ public class Chapter4 {
 		
 		 DoubleStream tc54 = DoubleStream.of(1,3,5);
 		 Stream<String> tc55 = tc54.mapToObj(tc54_1 -> "double value is : " + tc54_1);
+		 //DoubleStream.of(1,3,5).mapToInt( i ->  i);// Does not compile DoubleStream.of(1,3,5).mapToInt( i ->	averagingDouble  i);
+		 DoubleStream.of(1,3,5).mapToInt( i -> (int) i);// explicit cast needed
 	}
 	
 	static void testSteamFlatMap() {
@@ -201,7 +237,12 @@ public class Chapter4 {
 		Stream<List<String>> tc28 = Stream.of(tc24,tc25,tc26,tc27);
 		//Stream<String> tc28_1 = tc28.flatMap(List::stream); //Flat map the List<String> Stream to String Stream
 		//IntStream tc28_2 = tc28.flatMap(List::stream).flatMapToInt(x -> IntStream.of(x.length()));//Flat map the List<String> Stream to String Stream, then flat map the Stream<Stream<Integer>> to Int Stream
-		IntStream tc28_2 = tc28.flatMap(List::stream).mapToInt(x -> x.length());
+		System.out.println("*****start: testSteamFlatMap_1*******");
+		tc28.flatMap((List<String> ls) -> ls.stream()).forEach(System.out::println);//Lambda to method refenrece, List::stream
+		
+		Stream.of(tc27).flatMap(List::stream).findAny().ifPresentOrElse((String s) -> System.out.println("String is NOT empty"), () -> System.out.println("String is empty"));
+		System.out.println("*****end: testSteamFlatMap_1*******");
+		System.out.print("testSteamFlatMap_1: ");
 		// .forEach(tc28_2 -> System.out.println("flat map: " + tc28_2));
 		//Stream<?> tc28_3 = tc28.map(List::stream); //This is an Object type, which equels to Stream<Stream<String>> tc28_3 = tc28.map(List::stream);//since in map the List<String> converts to Stream<String>
 		
@@ -247,7 +288,7 @@ public class Chapter4 {
 	    tc33.limit(3).forEach(System.out::println);
 	    tc34.limit(3).forEach(System.out::println);
 	    
-	    //LongStream
+	    //LongStream and Optional
 		LongStream tc35 = LongStream.rangeClosed(100, 1000);
 		OptionalDouble tc35_1 = tc35.average();
 		tc35_1.ifPresent(System.out::println);
@@ -265,9 +306,11 @@ public class Chapter4 {
 	
 	static void testStreamCollectorsMapping() {
 	    /**********************Collectors.mapping() example **************/
-	    Stream<String> tc74 = Stream.of("first", "length", "asdfsaf", "ffsasfe", "sdfefeeee");
+	    Stream<String> tc74 = Stream.of("one", "two", "three", "four", "five");
 	    Map<Integer, Optional<Character>> tc75 = tc74.collect(Collectors.groupingBy(x -> x.length(),
-	    		Collectors.mapping(s -> s.charAt(0), Collectors.minBy(Comparator.naturalOrder()))));;
+	    		Collectors.mapping(s -> s.charAt(0), Collectors.minBy(Comparator.naturalOrder()))));
+	    		
+	    System.out.println("test 3 parameters groupingBy() :" + tc75);//{3=o,4=f, 5=t}
 	    		
 	    Consumer<String> tc76 = String::new;
 	    
@@ -278,15 +321,32 @@ public class Chapter4 {
 	    
 	    Stream<String> tc81 = Stream.of("abc", "bcd");
 	    //Stream<Integer> tc82 = tc81.mapToInt(s -> s.length());//DOES NOT COMPILE, since mapToInt returns a IntStream, assign a IntStream Object to a Stream reference is not legal
+	    
+	    System.out.println("testStreamCollectorsMapping: " + Stream.of("abc", "bcd").collect(Collectors.mapping((String s) -> s.charAt(0) , Collectors.minBy(Comparator.naturalOrder()))));
+	    
+	    
+	    //Map<Integer, Optional<Character>> tc50 = tc49.collect(Collectors.groupingBy(String::length, Collectors.mapping((String s) -> s.charAt(0), Collectors.minBy(Comparator.naturalOrder())))); 
+	    
+	    TreeMap<Integer, Optional<Character>> threeParaGroupingBy = Stream.of("first", "second", "third").collect(Collectors.groupingBy((String s) -> s.length() , TreeMap::new, Collectors.mapping((String s) -> s.charAt(0), Collectors.minBy(Comparator.naturalOrder()))));
 	}
 	
 	static void testOptional() {
 		Optional<String> tc36 = Optional.of("Stinsdf");
+		tc36.get();//throw NoSuchElementException, which is a unchecked Exception.
+		
+		Optional<String> ofNullable = Optional.ofNullable(null);
+		Double notAnum = Double.NaN;
+		System.out.println("not a number: " + notAnum);
+		
 		Optional<Optional<Integer>> op = tc36.map(Chapter4::calculator);
 		Optional<Integer> tc37 = tc36.map(String::length);
 		Optional<Integer> tc38 = tc36.flatMap(Chapter4::calculator);
 	    tc38 = tc36.flatMap((String s) -> Chapter4.calculator(tc36.get()));
 	    //Optional<Integer> tc39 = tc36.map(tc39_1 -> Chapter4.calculator(tc36.get()));//DOES NOT COMPILE, returns Optional<Optional<Integer>> not a Optional<Integer>
+	    
+	    Stream<String> tc8 = Stream.of("ape", "baby", "Flamigo");
+		Optional<String> tc9 = tc8.min((tc8_1, tc8_2) -> tc8_1.length() - tc8_2.length());// min() takes a Comparator, which is also a functional interface
+		tc9.ifPresent(System.out::println);
 	}
 	
 	static <T> void aSupplier(Supplier<T> s) {
