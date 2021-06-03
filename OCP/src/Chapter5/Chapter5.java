@@ -28,40 +28,94 @@ public class Chapter5 {
 	public static final Locale FR = new Locale("fr", "FR");
 	public static final NumberFormat NUM_FORMAT = NumberFormat.getInstance();
 	public static final NumberFormat MONEY_FORMAT = NumberFormat.getCurrencyInstance();
-	//public static final Optional<String> ZONE_WITH_LIKE = ZoneId.getAvailableZoneIds().stream().filter(s -> s.contains("US") || s.contains("CA")).findFirst();
+	public static final Optional<String> ZONE_WITH_LIKE = ZoneId.getAvailableZoneIds().stream().filter(s -> s.contains("US") || s.contains("CA")).findFirst();
 	
 	public static void main(String[] args) {
-
+		//ChronoUnit.HOURS.between(DATE, DATE);//EXCEPTION ! ! !
+		testZonedTime();
+		testInstant();
+		testLocalTime_LocalDate();
+		testPeriod();
+		testDuration();
+		testBuildLocale();
 		
-		// TODO Auto-generated method stub
-		//LocalTime tc1 = LocalTime.of(25, 61,61);//Throw Exception
-		Locale builder = new Locale.Builder().setLanguage("en").setRegion("US").build();
-		
-		System.out.println("using builder: " + builder);
+		testResourceBundle(EN);
+		testResourceBundle(FR);
 
+		testNumberFomatter(1_3_00_0_0);
+		testDateFormat();
+		
+		testEpoch();
+		
+		testStringComparasion();
+		testStringReplace();
+	}
+	
+	public static void testZonedTime() {
 		ZonedDateTime tc3 = ZonedDateTime.of(LocalDateTime.now(), Zone);
 		System.out.println("ZonedDateTime is " + tc3);
 		
 		//ZoneId.getAvailableZoneIds().stream().filter(s->s.contains("US")).forEach(System.out::println);
+		//ZonedDateTime tc12 = ZonedDateTime.of(2015, Month.APRIL, 15, 17,10,10,200, Zone); //DOES NOT COMPILE, ZonedDateTime does not support enum month
 		
-
-		//tc4.plusMinute DOES NOT COMPILE
-		
-		Period tc5 = Period.of(1,0,3);
-		System.out.println("a Period: " + tc5);
-		
-		Duration tc6 = Duration.ofDays(365);
-		System.out.println("a Duration: " + tc6);
-		Duration tc7 = Duration.of(5, ChronoUnit.MILLIS);
-		System.out.println("a Duration: " + tc7);
-		
+		System.out.println("Converting ZonedDateTime to instant " + ZONED_TIME.toInstant());
+	}
+	
+	public static void testInstant() {
 		ZonedDateTime tc8 = ZonedDateTime.of(DATE, TIME, Zone);
 		Instant tc9 = tc8.toInstant();
 		Instant tc10 = Instant.now();
 		System.out.println("instant is " + tc10);
 		System.out.print(tc8);System.out.print("******");System.out.println(tc9);
+		System.out.println("Instant method Chain: " + ZONED_TIME.toInstant().minus(1,ChronoUnit.HOURS).minus(1, ChronoUnit.DAYS));
 		
 		//System.out.println(Instant.now().plus(1, ChronoUnit.WEEKS)); //EXCEPTION, instance does not support changing greater than DAYs
+	}
+	
+	public static void testLocalTime_LocalDate () {
+		//LocalTime tc1 = LocalTime.of(25, 61,61);//Throw Exception, Invalid value for HourOfDay (valid values 0 - 23): 25
+		
+		System.out.println(LocalDate.of(2021, Month.JANUARY, 29).plusMonths(1));
+		System.out.println(LocalDate.of(2021, Month.MARCH, 29).minusMonths(1));
+	}
+	
+	public static void testPeriod() {
+		Period tc5 = Period.of(1,0,3);
+		System.out.println("a Period: " + tc5);
+		
+		System.out.println(Duration.of(1, ChronoUnit.MILLIS));
+		//System.out.println(Period.of(1, ChronoUnit.MILLIS));DOES NOT COMPILE
+		System.out.println(Period.ofYears(0001));
+	}
+	
+	public static void testDuration() {
+		Duration tc6 = Duration.ofDays(365);
+		System.out.println("a Duration: " + tc6);
+		Duration tc7 = Duration.of(5, ChronoUnit.MILLIS);
+		System.out.println("a Duration: " + tc7);
+		LocalDateTime dateTime1 = LocalDateTime.now();
+		LocalDateTime dateTime2 = LocalDateTime.now();
+		
+		LocalDate date1 = LocalDate.now();
+		LocalDate date2 = LocalDate.now();
+		
+		ZonedDateTime zonedDateTime = ZonedDateTime.of(2021, 01, 13, 23, 59, 1, 1, Zone.of("US/Eastern"));
+		
+		//System.out.println("timing difference by using instant: " + Duration.between(INSTANT_NOW, date)); //throw DateTimeException, due to unable to obtain Instant. 
+		//System.out.println("timing difference by using instant: " + Duration.between(INSTANT_NOW, dateTime)); //throw DateTimeException, due to unable to obtain Instant. 
+		System.out.println("timing difference by using instant: " + Duration.between(INSTANT_NOW, zonedDateTime)); 
+		System.out.println("timing difference by using instant: " + Duration.between(dateTime1, dateTime2)); 
+		//System.out.println("timing difference by using instant: " + Duration.between(date1, date2)); //UnsupportedTemporalTypeException, Unsupported unit: Seconds
+		
+		System.out.println(Duration.of(1, ChronoUnit.MILLIS));
+		//System.out.println(Period.of(1, ChronoUnit.MILLIS));DOES NOT COMPILE
+		
+		System.out.println(Duration.ofHours(1).ofSeconds(1));
+	}
+	
+	public static void testBuildLocale() {
+		Locale builder = new Locale.Builder().setLanguage("en").setRegion("US").build();	
+		System.out.println("using builder: " + builder);
 		
 		Locale tc11 = Locale.getDefault();
 		System.out.println("my first Locale of Java : " + tc11);
@@ -69,43 +123,12 @@ public class Chapter5 {
 		System.out.println(new Locale("Ella", "Zhizhi"));
 		//Locale.setDefault(new Locale("fr"));
 		System.out.println("set default Locale: " + Locale.getDefault());
-		
-		printLocaleMessage(EN);
-		printLocaleMessage(FR);
-		
-		numberFomatter(1_3_00_0_0);
-		dateFormat();
-		System.out.println(Duration.of(1, ChronoUnit.MILLIS));
-		//System.out.println(Period.of(1, ChronoUnit.MILLIS));DOES NOT COMPILE
-		
-		//ZonedDateTime tc12 = ZonedDateTime.of(2015, Month.APRIL, 15, 17,10,10,200, Zone); DOES NOT COMPILE
-		
-		System.out.println(LocalDate.of(2021, Month.JANUARY, 29).plusMonths(1));
-		System.out.println(LocalDate.of(2021, Month.MARCH, 29).minusMonths(1));
-		System.out.println(ZONED_TIME.toEpochSecond());
-		System.out.println("ofEpochSecond: " + Instant.ofEpochSecond(0));
-		System.out.println(Duration.ofHours(1).ofSeconds(1));
-		System.out.println(Period.ofYears(0001));
-		//ChronoUnit.HOURS.between(DATE, DATE);//EXCEPTION ! ! !
-		System.out.println("timing difference by using instant: " + Duration.between(INSTANT_NOW, tc10));
-		System.out.println("Converting ZonedDateTime to instant " + ZONED_TIME.toInstant());
-		
-		String tc13 = "ab";
-		String tc14 = "a";
-		String tc15 = "b";
-		String tc16 = "a" + "b";
-		System.out.print("String comparasion: ");
-		System.out.println(tc13 == tc16);
-		
-		String tc17 = "aaaaaaa";
-		System.out.println("replace test: " + tc17.replace('a', 'b'));
-		System.out.println("replace test: " + tc17.replaceAll("aa", "bb"));
-		System.out.println("Instant method Chain: " + ZONED_TIME.toInstant().minus(1,ChronoUnit.HOURS).minus(1, ChronoUnit.DAYS));
+			
 		Locale tc_invalid = new Locale("HI", "HI");
 		Locale tc_builder = new Locale.Builder().setLanguage("en").build();
 	}
 	
-	public static void printLocaleMessage(Locale locale) {
+	public static void testResourceBundle(Locale locale) {
 		ResourceBundle rb = ResourceBundle.getBundle("Chapter5.Zoo", locale);//FULL PATH IS NEEDED!!!!
 		Properties pp = new Properties();
 		
@@ -125,7 +148,7 @@ public class Chapter5 {
 		System.out.println("the converted properties is " + p);
 	}
 	
-	public static void numberFomatter(int num) {
+	public static void testNumberFomatter(int num) {
 		int attendeePerMonth = num/12;
 		Locale locale = new Locale("en", "US");
 		System.out.println("no Locale: " + NumberFormat.getInstance().format(num));
@@ -145,7 +168,7 @@ public class Chapter5 {
 			
 	}
 	
-	public static void dateFormat() {
+	public static void testDateFormat() {
 		/*Throw UnsupportedTemporalTypeException 
 		DATE.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
 		DATE.format(DateTimeFormatter.ISO_LOCAL_TIME);
@@ -171,6 +194,29 @@ public class Chapter5 {
 		System.out.println(LocalDate.parse(dateDefault));
 		System.out.println(LocalTime.parse("11:20")); //NO need to pass a formatter if LocalTime.parse
 		//System.out.println(LocalDate.parse(date, MMMM_DD_YYYY));
+	}
+	
+	public static void testEpoch() {
+		System.out.println(ZONED_TIME.toEpochSecond());
+		System.out.println("ofEpochSecond: " + Instant.ofEpochSecond(0));
+	}
+	
+	public static void testStringComparasion() {
+		String tc13 = "ab";
+		String tc14 = "a";
+		String tc15 = "b";
+		String tc16 = "a" + "b";
+		String tc17 = tc14+tc15;
+		System.out.print("String comparasion: ");
+		System.out.println(tc13 == tc16);// return "true" due to string literal pool
+		System.out.print("String tc17 is: " + tc17 + ". Is tc17 equals to String Literal? ");
+		System.out.println(tc17==tc16);//return "false" due to reference comparasion
+	}
+	
+	public static void testStringReplace() {
+		String tc17 = "aaaaaaa";
+		System.out.println("replace test: " + tc17.replace('a', 'b'));
+		System.out.println("replace test: " + tc17.replaceAll("aa", "bb"));
 	}
 	
 }
