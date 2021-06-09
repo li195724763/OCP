@@ -7,12 +7,12 @@ public class Chicken implements Closeable{
 
 	
 	@Override
-	public void close() throws  IOException{
+	public void close() {///throws  IOException{
 		
 		// TODO Auto-generated method stub
 		count++;
 		count++;
-		System.out.println("implemented Closeable: " + count);
+		System.out.println("2 implemented Closeable: " + "count is : " + count);
 	}
 	
 	static int count = 0;
