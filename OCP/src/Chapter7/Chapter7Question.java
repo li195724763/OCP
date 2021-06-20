@@ -43,13 +43,13 @@ public class Chapter7Question {
 		try {
 			f.get();
 		} catch (InterruptedException | ExecutionException e) {
-			// TODO Auto-generated catch block
 			System.out.println(e.getClass() + " testFuture!"); 
 		}
 	}
 	
 	public static int ThrowException() throws Exception {
-		throw new Exception("ThrowException");
+		//throw new Exception("ThrowException");
+		throw new NullPointerException("ThrowException");
 	}
 	
 	public static void testQuestion_22() {

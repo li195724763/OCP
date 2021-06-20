@@ -30,9 +30,9 @@ public class ForkJoin extends RecursiveAction{
 			} else {
 				int middle = start + (end - start)/2;
 				RecursiveTask<Double> otherTask = new ForkJoinRecursiveTask(weights, start, middle);
-				otherTask.fork();
+				otherTask.fork();//start a new thread that execute "otherTask"
 				System.out.println("start is: " + start + " middle is :" + middle + " end is : " + end);
-				return new ForkJoinRecursiveTask(weights, middle, end).compute() + otherTask.join();
+				return new ForkJoinRecursiveTask(weights, middle, end).compute() + otherTask.join();//start a calculation test in current thread and wait for otherTask to complete(otherTask.join())
 			}
 			
 			return sum;
@@ -73,9 +73,9 @@ public class ForkJoin extends RecursiveAction{
 		Double[] weights = new Double[10];
 		
 		//*****************RecursiveAction*********************
-		ForkJoinTask<?> task1 = new ForkJoin(weights, 0, weights.length);
-		ForkJoinPool pool_1 = new ForkJoinPool();
-		//pool_1.invoke(task1);
+		ForkJoinTask<?> recursiveAction = new ForkJoin(weights, 0, weights.length);
+		ForkJoinPool recursiveActionPool_1 = new ForkJoinPool();
+		recursiveActionPool_1.invoke(recursiveAction);
 		
 		//*****************RecursiveTask*********************
 		long start = System.currentTimeMillis();

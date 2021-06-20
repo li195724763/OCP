@@ -20,6 +20,7 @@ import java.util.stream.Stream;
  * */	 
 
 public class Chapter7 {
+	static int i = 0;
 	
 	class PrintData implements Runnable{
 		@Override 
@@ -48,7 +49,8 @@ public class Chapter7 {
 		}
 		
 	}
-	public static void main(String[] args) throws InterruptedException, InterruptedException, TimeoutException , ExecutionException {				
+	public static void main(String[] args) throws InterruptedException, InterruptedException, TimeoutException , ExecutionException {			
+		testRunnableAndCallable();
 		testMainThreadAndSeparateThread();		
 		testRunMethodWithoutStart(); 
 		testPollingWithSleep();
@@ -79,6 +81,16 @@ public class Chapter7 {
 		printSomething();
 	}
 	
+	public static void testRunnableAndCallable() {
+		final int j = 0;
+		
+		Callable c = () -> i++;
+		Runnable r = () -> i++;
+		
+		//Runnable r2 = () -> j;//Does not compile, due to return value j
+		//Runnable r2 = () -> {i;};//Does not compile
+	}
+	
 	public static void testMainThreadAndSeparateThread () {
 		System.out.println("main thread");
 		Runnable tc1 = () -> System.out.println("my first runnable after 10 years");	
@@ -92,6 +104,8 @@ public class Chapter7 {
 		new Thread(() -> System.out.println(1)).start();
 		//new Thread(t3).start();DOES NOT COMPILE, Thread constructor does not take Callable
 		new ReadInventoryThread().start();
+		
+		new Thread(() -> System.out.println("testMainThreadAndSeparateThread by calling run()")).run();
 	}
 	
 	public static void testRunMethodWithoutStart() {
@@ -160,9 +174,9 @@ public class Chapter7 {
 		}
 		
 		if(service != null) {
-			service.awaitTermination(2, TimeUnit.SECONDS);
+			boolean a = service.awaitTermination(2, TimeUnit.SECONDS);
 			if(service.isTerminated()) {
-				System.out.println("all tasks are done");	
+				System.out.println("all tasks are done: " + a);	
 			} else {
 				System.out.println("not all tasks are done");	
 			}
@@ -190,16 +204,28 @@ public class Chapter7 {
 		}
 	}
 	
-	public static void testExecutorService () {
+	public static void testExecutorService (){
 		Chapter7Util.staticExecutor.submit(() -> System.out.println("static executor service"));
 		Chapter7Util.staticExecutor.shutdown();
+		
+		Executors.newSingleThreadExecutor().submit(() -> {try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}});
+		
+		ExecutorService es = Executors.newSingleThreadExecutor();
+		es.submit(() -> 1);
+		es.shutdown();
+		//es.submit(() -> 1);throw RejectedExecutionException, since trying to submit a task to a service executor already shut down.
 	}
 	
 	public static void testexecutorServiceUsingCallable() throws InterruptedException, ExecutionException {
 		ExecutorService service = null;
 		service = Executors.newSingleThreadExecutor();
 		Runnable r = () -> Chapter7Util.UTILITY_INT = 11+22;
-		try {
+		//try {
 			//Future<Integer> tc1 = service.submit(() -> 11+22);
 			//service.submit(() -> Chapter7Util.UTILITY_INT = 11+22);
 			Runnable run = () -> Chapter7Util.counter++;
@@ -212,14 +238,16 @@ public class Chapter7 {
 			System.out.println("calling executorServiceUsingCallable and the Future<?> t1 result is : " + tc1.get());
 			System.out.println("calling executorServiceUsingCallable and the Future<?> t2 result is : " + tc2.get());
 			//WHY use a separate runnable result out in UTILITY_INT IS 0?????Since the order of the indenpendent task and main task are not guarunteed!!! 
-		}finally {
+		//}finally {
 			service.shutdown();
-		}
+		//}
 	}
 	
 	public static void testScheduler() throws InterruptedException {
 		ScheduledExecutorService service = null;
 		service = Executors.newSingleThreadScheduledExecutor();
+		//Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(command, initialDelay, period, unit);
+		//Executors.newScheduledThreadPool(11)service.scheduleAtFixedRate(command, initialDelay, period, unit);
 		
 		Callable<?> call = () -> {System.out.println("testScheduler_this is a callable"); return null;};
 		
@@ -375,7 +403,7 @@ public class Chapter7 {
 		System.out.println(Arrays.asList(1,2,3,4,5).parallelStream().findAny()); //result is not predicatable.
 		
 		Stream<Character> tc1 = Stream.of('w', 'o', 'l', 'f').parallel(); 
-		System.out.println(tc1.reduce("" , (String s1 , Character c) -> c+s1, (s2,s3) -> s2 + s3)); //follow rule number 1: identity is not affecting the result
+		System.out.println(tc1.reduce("" , (String s1 , Character c) -> c+s1, (String s2,String s3) -> s2 + s3)); //follow rule number 1: identity is not affecting the result
 		
 		Stream<Character> tc2 = Stream.of('w', 'o', 'l', 'f').parallel(); 
 		System.out.println(tc2.reduce("X" , (c , s1) -> c+s1, (s2,s3) -> s2 + s3)); //breaking rule number 1 , E.g. : XwXoXlXf
@@ -437,7 +465,7 @@ public class Chapter7 {
 	public static void testReuseCyclicBarrierProcess(CyclicBarrier c1) {		
 		try {
 			testCyclicBarrierRemoveAnimal();
-			//new CyclicBarrier(2).await();//hangs here
+			//new CyclicBarrier(2).await();//hangs here, must call await(2) from an object reference, otherwise handed.
 			c1.await();
 			testCyclicBarrierCleanPen();
 			c1.await();
@@ -466,7 +494,6 @@ public class Chapter7 {
 		try {
 			Thread.sleep(100);
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}	
