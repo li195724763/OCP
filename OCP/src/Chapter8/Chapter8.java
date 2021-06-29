@@ -1,20 +1,6 @@
 package Chapter8;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Reader;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.*;
+import java.util.*;
 
 public class Chapter8 {
 	public static void main(String args[]) {
@@ -25,11 +11,15 @@ public class Chapter8 {
 		//testInputOutputFileStream();
 		testBufferedInputOutputStream();
 		testBufferedReaderWriter();
+		testPrintWriter();
+		testSystemInAndConsole();
+		question23();
 	}
 	
 	public static void testFileSeparator() {
 		System.out.println(System.getProperty("file.separator"));//the "file.separator" is case-sensitive, return null if not match.
 		System.out.println(File.separator);
+		System.out.print(System.getProperty("line.separator"));
 	}
 	
 	public static void testIfFileMethod() {
@@ -102,11 +92,13 @@ public class Chapter8 {
 	}
 	
 	public static void testBufferedReaderWriter() {
-		List<String> readResult = new ArrayList<>();
-		String data = "";
-		try(BufferedReader read = new BufferedReader(new FileReader("C:\\Java\\TestBufferReader.txt"))){
+		//List<String> readResult = new ArrayList<>();
+		String data;
+		try(BufferedReader read = new BufferedReader(new FileReader("C:\\Java\\TestBufferReader.txt")); 
+				BufferedWriter write = new BufferedWriter(new FileWriter("C:\\Java\\TestBufferWriter.txt"))){
 			while((data = read.readLine()) != null) {
-				readResult.add(data);
+				write.write(data);
+				write.newLine();
 			}
 			
 		} catch (FileNotFoundException e) {
@@ -115,14 +107,69 @@ public class Chapter8 {
 			e.printStackTrace();
 		}
 		
-		try(BufferedWriter write = new BufferedWriter(new FileWriter("C:\\Java\\TestBufferWriter.txt"))){
+		/*try(BufferedWriter write = new BufferedWriter(new FileWriter("C:\\Java\\TestBufferWriter.txt"))){
 			for(String string : readResult) {
 				write.write(string);
 				write.newLine();
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
+		}*/
+		
+	}
+	
+	public static void testPrintWriter() {
+		try(PrintWriter out = new PrintWriter("C:\\Java\\TestPrintWriter.txt")) {			
+			out.write("hellow world1");
+			out.println();
+			out.format("calling format s", "YYYYDDMM");// first part is the format, second part and so on falls to the varargs. 
+			out.println();
+			out.print("Hellow world2");
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			System.out.println("here");
+			e.printStackTrace();
+		}
+	}
+	
+	
+	public static void testSystemInAndConsole() {
+		
+		try(BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
+			String input = br.readLine();
+			System.out.println("The old way of reading input: " + input);
+			br.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		
+		Console c = System.console();
+		if(c != null) {
+			String input2 = c.readLine();
+			//c.writer().println("The new way of reading input" + input2);
+			
+		}
+	}
+	
+	public static void question23() {
+		final StringBuilder sb = new StringBuilder();
+		try(InputStream is = new BufferedInputStream(new FileInputStream("C:\\Java\\TestQuestion23.txt"))){
+			if(is.markSupported()) {	
+				int count = 3;
+				is.mark(count);			
+				for(int i=0;i<count;i++) {
+					sb.append((char)is.read());
+					is.reset();
+					is.skip(1);
+					sb.append((char)is.read());
+				}
+			}
+
+		} catch(IOException e) {
+			
+		}
+		
+		System.out.println(sb);
 	}
 }
