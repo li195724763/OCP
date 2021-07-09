@@ -8,7 +8,8 @@ public class Chapter8 {
 		testIfFileMethod();
 		testMarkAndReset();
 		testSkip();
-		//testInputOutputFileStream();
+		testInputOutputFileStream();
+		testFileEnd();
 		testBufferedInputOutputStream();
 		testBufferedReaderWriter();
 		testPrintWriter();
@@ -25,48 +26,76 @@ public class Chapter8 {
 	public static void testIfFileMethod() {
 		File file = new File("C:/AMD/test");
 		System.out.println(file.exists());
+		
+		File file2 = new File("src"+System.getProperty("file.separator")+"Chapter8"+System.getProperty("file.separator")+"RelativePath.txt");
+		System.out.println("relative path test " + file2.exists());
+		
+		File testMkdir = new File("C:/AMD/testmkdirdd/testmkdir.txt");
+		testMkdir.mkdir();
+		
+		File testMkdirs = new File("C:/AMD/testmkdirdd/testmkdir.txt");
+		testMkdirs.mkdirs();
 	}
 	
 	public static void testMarkAndReset() {
-		try(InputStream inputStream1 = new BufferedInputStream(new FileInputStream("C:\\Java\\TestFile.txt"))){
+		try(InputStream inputStream1 = new BufferedInputStream(new FileInputStream("C:\\Java\\TestFile.txt")); 
+				InputStream fileInput = new  FileInputStream("C:\\Java\\TestFile.txt")){
+			boolean markSupported = fileInput.markSupported();
+			System.out.println("is mark supported for FileInputStream? " + markSupported);
+			System.out.println("is mark supported for BufferedInputStream? " + inputStream1.markSupported());
+			fileInput.mark(3);
+			//fileInput.reset();
 			if(inputStream1.markSupported()) {	
+				System.out.println("Begin testing mark() and reset"); 
 				System.out.println((char)inputStream1.read());
-				inputStream1.mark(100);
-				System.out.print("testInputOutputStream test mark() and reset(), before calling reset(): ");
-				System.out.print((char)inputStream1.read());
-				System.out.print((char)inputStream1.read());
+				inputStream1.mark(-1);
+				System.out.println("testInputOutputStream test mark() and reset(), before calling reset(): ");
+				System.out.println((char)inputStream1.read());
+				System.out.println((char)inputStream1.read());
 				//System.out.print((char)inputStream1.read());
-				System.out.println("");
 				inputStream1.reset();
 			}
-			System.out.print("testInputOutputStream test mark() and reset(), after calling reset(): ");
-			System.out.print((char)inputStream1.read());
-			System.out.print((char)inputStream1.read());
-			System.out.print((char)inputStream1.read());
-			System.out.println("");
+			System.out.println("testInputOutputStream test mark() and reset(), after calling reset(): ");
+			System.out.println((char)inputStream1.read());
+			System.out.println((char)inputStream1.read());
+			System.out.println((char)inputStream1.read());
+			System.out.println("End testing mark() and reset"); 
 		} catch(IOException e) {
-			
+			e.printStackTrace();
 		}
 
 	}
 	
+	
 	public static void testSkip() {
 		try(InputStream is = new  FileInputStream("C:\\Java\\TestFile.txt")){
-			System.out.println((char)is.read());
-			is.skip(2);
-			System.out.println((char)is.read());
+			System.out.println("testSkip: " + (char)is.read());
+			long wantTOSkip = 2;
+			long actualSkip = is.skip(wantTOSkip);
+			System.out.println("testSkip after calling skip(): " + (char)is.read());
+			System.out.println("Want to skip: " + wantTOSkip + ". Actual skip is : " + actualSkip);
 		} catch (FileNotFoundException e) {
-	
+			e.printStackTrace();
 		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 	
 	public static void testInputOutputFileStream() {
-		try(InputStream input = new FileInputStream("C:\\Java\\TestFile.txt") ; OutputStream output = new FileOutputStream("C:\\Java\\TestOutput.txt")){
+		try(InputStream input = new FileInputStream("C:\\Java\\TestFile.txt") ; OutputStream output = new FileOutputStream("C:\\Java\\TestOutputByte.txt")){
 			int i;
-			while((i = input.read()) != -1) {
-				output.write(i);
+			byte[] byteArr = new byte[10];
+			while((i = input.read(byteArr)) > 0) {// return the number of byte, 0 means the end of the input stream
+				output.write(byteArr);
 			}
+		}catch(IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void testFileEnd() {
+		try(InputStream input = new FileInputStream("C:\\Java\\TestFileEnd.txt")){
+			System.out.println("TestFileEnd: " + (char)input.read());//if there is a -1 in file, it will read() "-" first, then read 1
 		}catch(IOException e) {
 			e.printStackTrace();
 		}
@@ -119,28 +148,32 @@ public class Chapter8 {
 	}
 	
 	public static void testPrintWriter() {
-		try(PrintWriter out = new PrintWriter("C:\\Java\\TestPrintWriter.txt")) {			
+		try(PrintWriter out = new PrintWriter("C:\\Java\\TestPrintWriter.txt"); PrintWriter sysout = new PrintWriter(System.out)) {			
 			out.write("hellow world1");
 			out.println();
-			out.format("calling format s", "YYYYDDMM");// first part is the format, second part and so on falls to the varargs. 
+			out.format("calling format s, ", "YYYYDDMM");// first part is the format, second part and so on falls to the varargs. 
+			out.printf("calling printf s", "YYYYDDMM");// first part is the format, second part and so on falls to the varargs. 
 			out.println();
 			out.print("Hellow world2");
+			out.println();
+			out.println("Hellow world3");
+			Animal a = new Animal("wahaha", 5, 'W');
+			//out.println();
+			out.print(a);// write the object by using toString() method, this is not serialization.
+			
+			sysout.println("testPrintWriter, this is a message print from a PrintWriter wrapped a System.out");
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			System.out.println("here");
 			e.printStackTrace();
 		}
 	}
 	
 	
 	public static void testSystemInAndConsole() {
-		
 		try(BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
+			
 			String input = br.readLine();
-			System.out.println("The old way of reading input: " + input);
-			br.close();
+			System.out.println("Thee old way of reading input: " + input);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -155,6 +188,7 @@ public class Chapter8 {
 	public static void question23() {
 		final StringBuilder sb = new StringBuilder();
 		try(InputStream is = new BufferedInputStream(new FileInputStream("C:\\Java\\TestQuestion23.txt"))){
+			System.out.println("is mark() supported for BufferedInputStream? " + is.markSupported());
 			if(is.markSupported()) {	
 				int count = 3;
 				is.mark(count);			
