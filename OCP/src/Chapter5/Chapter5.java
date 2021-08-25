@@ -55,6 +55,7 @@ public class Chapter5 {
 		ZonedDateTime tc3 = ZonedDateTime.of(LocalDateTime.now(), Zone);
 		System.out.println("ZonedDateTime is " + tc3);
 		
+		//ZoneId zone = new ZoneId("");//Does not compile
 		//ZoneId.getAvailableZoneIds().stream().filter(s->s.contains("US")).forEach(System.out::println);
 		//ZonedDateTime tc12 = ZonedDateTime.of(2015, Month.APRIL, 15, 17,10,10,200, Zone); //DOES NOT COMPILE, ZonedDateTime does not support enum month
 		
@@ -71,7 +72,9 @@ public class Chapter5 {
 		
 		//Instant.now().plus(1, ChronoUnit.WEEKS); //EXCEPTION, instance does not support changing greater than DAYs
 		Instant.now().plus(1, ChronoUnit.DAYS);//No Exception
+		Instant.now().plus(1, ChronoUnit.HOURS);//No Exception
 		//Instant.now().plus(1, ChronoUnit.YEARS);
+		//Instant.now().plus(1, ChronoUnit.MONTHS); // UnsupportedTemporalTypeException: Unsupported unit: Months
 	}
 	
 	public static void testLocalTime_LocalDate () {
@@ -221,14 +224,17 @@ public class Chapter5 {
 	
 	public static void testResourceBundleAndProperties(Locale locale) {
 		ResourceBundle rb = ResourceBundle.getBundle("Chapter5/Zoo", locale);//FULL PATH IS NEEDED!!!!, or using "Chapter5/Zoo" to force the system pick .properties files.
+		//ResourceBundle rb = ResourceBundle.getBundle("Chapter5.Zoo", locale);//this is using .java class
 		Properties property1 = new Properties();
+		
+		System.out.println(rb.getBaseBundleName());
 		
 		//System.out.println("under method printLocaleMessage() " + rb.getString("open"));
 		//rb.keySet().stream().map(s -> s + " " + rb.getString(s)).forEach(System.out::println);
 		rb.keySet().stream().forEach(s -> property1.put(s, rb.getObject(s)));
 		
 		System.out.println("testResourceBundle(), passing in Locale is: " + locale);
-		System.out.println("testResourceBundle() resource boundle: " + rb.keySet());
+		System.out.println("testResourceBundle() resource boundle keyset: " + rb.keySet());
 		System.out.println("testResourceBundle() resource boundle: " + rb.getObject("open"));
 
 		//System.out.println("testResourceBundle(), selected resource bundle: " + rb.getBaseBundleName()); 
@@ -242,6 +248,10 @@ public class Chapter5 {
 		rb.keySet().stream().forEach(s -> property2.put(s, rb.getString(s)));
 		
 		System.out.println("the new property2 is " + property2);
+		//System.out.println("111get missingKeyInProperties: " + rb.getString("KeyInPropertiesOnly"));
+		//rb.getString("KeyInJavaFileOnly");//throw exception, if choosing Zoo.properties, since Zoo.java is not the parent of Zoo.properties
+		//rb.getString("KeyInPropertiesOnly");//throw exception, if choosing Zoo.java, since Zoo.properties is not the parent of Zoo.java
+		
 	}
 	
 	public static void testNumberFomatter(int num) {
@@ -287,6 +297,7 @@ public class Chapter5 {
 		*/
 		
 		DateTimeFormatter f1 = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT, FormatStyle.MEDIUM);
+		LocalDate.parse("2015-01-01");
 
 		ZONED_TIME.format(DateTimeFormatter.ISO_DATE);
 		System.out.println(DATE_TIME_FORMATTER.format(DATE_TIME));
@@ -335,6 +346,22 @@ public class Chapter5 {
 		System.out.println(tc13 == tc16);// return "true" due to string literal pool
 		System.out.print("String tc17 is: " + tc17 + ". Is tc17 equals to String Literal? ");
 		System.out.println(tc17==tc16);//return "false" due to reference comparasion
+		
+		String obj = new String("a");
+		String literal_a = "a";
+		String literal_a2 = "a";
+		String literal_b = "b";
+		
+		String lit_lit = literal_a + literal_b;
+		String mixed = obj + literal_b;
+		String pureLit = "ab";
+		
+		System.out.print("1: "); System.out.println(literal_a == literal_a2);//true
+		System.out.print("2: ");System.out.println(lit_lit == pureLit);//false
+		System.out.print("3: ");System.out.println(lit_lit == "ab");//false
+		System.out.print("4: ");System.out.println(pureLit == "ab");//true
+		System.out.print("5: ");System.out.println(lit_lit.equals(pureLit));//true
+		System.out.print("6: ");System.out.println(lit_lit == mixed);//false
 	}
 	
 	public static void testStringReplace() {

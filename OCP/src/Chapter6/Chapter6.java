@@ -33,6 +33,21 @@ public class Chapter6 {
 			//e = new NullPointerException();//does not compile due to reassignment.
 			System.out.println("after the print stack trace");// logic after print stack trace can still be executed.
 		}
+		
+		
+		try {
+			throw new FileNotFoundException();
+		}catch(FileNotFoundException e) {
+			
+		}catch(IOException e2) {
+			
+		}
+		
+		/*try {
+			throw new FileNotFoundException();
+		}catch(FileNotFoundException | IOException e) {// does not compile
+			
+		}*/
 	}
 	
 	public static void testRegularTryCatch() {

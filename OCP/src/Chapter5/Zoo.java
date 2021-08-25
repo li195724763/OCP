@@ -9,7 +9,8 @@ public class Zoo extends ListResourceBundle{
 			{"hello", "hello, from Zoo.java"},
 			{"open" ,"The Zoo is Open,from Zoo.java"},
 			{"another","another, from Zoo.java"},
-			{"anotheragain", "anothersyntc, from Zoo.java"}
+			{"anotheragain", "anothersyntc, from Zoo.java"},
+			{"KeyInJavaFileOnly", "KeyInJavaFileOnly"}
 		};
 		
 		

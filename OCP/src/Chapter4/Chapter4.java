@@ -26,6 +26,7 @@ public class Chapter4 {
 		testStreamCollectorsMapping();
 		
 		testOptional(); 	 
+		testAsList();
 	}
 	
 	static void testSupplier() {
@@ -182,6 +183,7 @@ public class Chapter4 {
 	    Stream<String> tc39 = Stream.of("first", "second", "aaaaa", "asdfsaf");
 	    //System.out.println(tc39.collect(Collectors.averagingDouble(String::length)).doubleValue());
 	    TreeMap<Integer, String> tc40 = tc39.collect(Collectors.toMap(String::length, value -> value, (String s1, String s2) -> s1 + ", " + s2, TreeMap::new));
+	    //Stream.of("first", "second", "55555", "55555").collect(Collectors.toMap(String::length, value->value));//exception due to missing merge function for duplicate key
 	    //BinaryOperator define the merge function, Supplier defined the overall return type
 	    System.out.println("to map() test: " + tc40);
 	    
@@ -292,6 +294,10 @@ public class Chapter4 {
 		LongStream tc35 = LongStream.rangeClosed(100, 1000);
 		OptionalDouble tc35_1 = tc35.average();
 		tc35_1.ifPresent(System.out::println);
+		
+		Stream<Integer> s = Stream.of(1);
+		IntStream s_int = s.mapToInt(i -> i);
+		//DoubleStream s_double = s.mapToDouble(i -> i);throw illegalstateexception, since stream has already been operated
 	}
 	
 	static void testStreamCollectorsJoining() {
@@ -328,6 +334,8 @@ public class Chapter4 {
 	    //Map<Integer, Optional<Character>> tc50 = tc49.collect(Collectors.groupingBy(String::length, Collectors.mapping((String s) -> s.charAt(0), Collectors.minBy(Comparator.naturalOrder())))); 
 	    
 	    TreeMap<Integer, Optional<Character>> threeParaGroupingBy = Stream.of("first", "second", "third").collect(Collectors.groupingBy((String s) -> s.length() , TreeMap::new, Collectors.mapping((String s) -> s.charAt(0), Collectors.minBy(Comparator.naturalOrder()))));
+	    
+	    Optional<Character> optMapping = Stream.of("apple", "banada", "cinemon").collect(Collectors.mapping(s->s.charAt(0), Collectors.minBy(Comparator.naturalOrder())));
 	}
 	
 	static void testOptional() {
@@ -347,6 +355,11 @@ public class Chapter4 {
 	    Stream<String> tc8 = Stream.of("ape", "baby", "Flamigo");
 		Optional<String> tc9 = tc8.min((tc8_1, tc8_2) -> tc8_1.length() - tc8_2.length());// min() takes a Comparator, which is also a functional interface
 		tc9.ifPresent(System.out::println);
+	}
+	
+	static void testAsList() {
+		List<Integer> a = Arrays.asList(1,2,3);
+		//a.add(4); //Exception in thread "main" java.lang.UnsupportedOperationException, array backed list is immutable.
 	}
 	
 	static <T> void aSupplier(Supplier<T> s) {

@@ -22,7 +22,7 @@ enum SeasonConstractor{
 
 /*****Main class*/
 public class Chapter1{
-	private static int identifier = 100;
+  private static int identifier = 100;
   private int id;
   private int nestedVariable = 0;
   int asdfjsk = 1_00;
@@ -45,6 +45,12 @@ public class Chapter1{
   } 
   public final static class staticInner3{}//final allowed
   public abstract static class staticInner2{}//abstract allowed
+  private final class innerPri1{}//can be private 
+  private abstract class innerPri2{}//can be private 
+  
+  private static final class innerStaticPri1{}
+  protected static abstract class innerStaticPri2{}
+  private static interface innerStaticPri3{}
   
 
   /********Member inner class */
@@ -82,7 +88,7 @@ public class Chapter1{
     System.out.println("access inner class private variable " + mInner.nestedVariable);
     //MemberInnerClass mInner2 = Chapter1.new MemberInnerClass();//DOES NOT COMPILE, need an instance then .new
     mInner.printHiThreeTimes();
-    myClass.calculate();
+    System.out.println("accessing member inner class private variable: " + mInner.nestedVariable);
 
     Chapter1.MemberInnerClass.NestClass nestClass = mInner.new NestClass(); //this synatx is needed , since the second nested class is too deep for Java to find.
     nestClass.printInstanceVariable();
@@ -95,6 +101,9 @@ public class Chapter1{
     myClass.anonymousInArguement();
     testEnum();
     testInstanceOf();
+    myClass.calculate();
+    System.out.println("test local inner class under static method: " + testLocalInnerClassUnderStaticMethod());
+    myClass.testStaticInnerClassUnderNonCtaticLocalMethod();
   }
   
   public static void testHashCode() {
@@ -161,15 +170,16 @@ public class Chapter1{
   }
   
   /****local inner class under static method*/
-  public static void testLocalInnerClassUnderStaticMethod() {
+  public static int testLocalInnerClassUnderStaticMethod() {
 	   final class Inner { //DOES NOT COMPILE if adding access modifier in local inner class, other than abstract or final
-	     public void multiply(int x, int y) {
+	     public int multiply(int x, int y) {
 	       System.out.println("ID from outter class is " + Chapter1.identifier);
 	       System.out.println(x * y);
+	       return x * y;
 	     }
 	    }
 	    Inner inner = new Inner();
-	    inner.multiply(20,200);
+	    return inner.multiply(20,200);
 	  }
 
   /****local inner class */
@@ -235,9 +245,6 @@ public class Chapter1{
 	  staticInner sInner = new staticInner();
   }
 }
-
-
-
 
 
 class implementRunnable extends Chapter1 implements Runnable{
