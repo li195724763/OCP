@@ -57,7 +57,9 @@ public class Chapter6 {
 			
 		}
 		catch (IOException e) {
-			
+			//RuntimeException ee = e;does not compile
+			Exception ee = e;
+				
 		}
 	}
 	
@@ -97,9 +99,11 @@ public class Chapter6 {
 	
 	public static void testAssertionTest(int x) {
 		//if(x < 0) { throw new IllegalArgumentException(); }	
+		//assert 1; does not compile, has to be boolean
+		
+		assert (x > 0) : ("1: X should great than 0");
+		assert x > 0 : ("2: X should great than 0");
 		assert(x > 0);
-		assert (x > 0) : "1: X should great than 0";
-		assert x > 0 : "2: X should great than 0";
 		
 		System.out.println("code after assert");
 	}
