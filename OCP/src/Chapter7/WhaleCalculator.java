@@ -14,15 +14,18 @@ public class WhaleCalculator {
 	
 	public void processAllData(List<Integer> data) {
 		//data.parallelStream().map(a -> processRecord(a)).forEach(System.out::println);
-		data.parallelStream().map(a -> processRecord(a)).count();//This completed immediatedly 
+		//long count = data.parallelStream().map(a -> processRecord(a)).count();//This completed immediatedly 
+		long count = data.stream().map(a -> processRecord(a)).count(); 
+		System.out.println(count);
 	}
 
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
 		WhaleCalculator calculator = new WhaleCalculator();
 		
 		List<Integer> data = new ArrayList<>();
-		for(int i=0;i<4000;i++) data.add(i);
+		for(int i=0;i<4000;i++) {
+			data.add(i);
+		} 
 		
 		long start = System.currentTimeMillis();
 		

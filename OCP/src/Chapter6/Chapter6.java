@@ -61,10 +61,16 @@ public class Chapter6 {
 			Exception ee = e;
 				
 		}
+		
+		try {}
+		//{}//does not compile
+		catch(Exception e) {
+			
+		}
 	}
 	
 	public static void testTryWithResource() {
-		try(Turkey t = new Turkey(); Chicken c = new Chicken()){ 
+		try(Turkey t = new Turkey(); Chicken c = new Chicken();){ 
 			// does not compile if not having a reference t. E.g. simply having "new Turkey()" will not compile.
 			//resource close on backwards order.
 			System.out.println("1 testTryWithResource: under try block");
