@@ -10,8 +10,11 @@ public class TestSerialization {
 		//System.out.println(testData.isFile());
 		
 		List<Animal> animals = new ArrayList<>();
-		animals.add(new Animal("Tommy Tiger", 5, 'T'));
-		animals.add(new Animal("Peter Penguin", 8, 'P'));
+		Animal a1 = new Animal("Tommy Tiger", 5, 'T');
+		Animal a2 = new Animal("Peter Penguin", 8, 'P');
+		a1.setTail(new Object());
+		animals.add(a1);
+		animals.add(a2);
 		Animal.testType = 'O';// if no overwrite, then use the default initialization, since testType is static. 
 		System.out.println("start serializating ");
 		createAnimalsFile(animals, testData);

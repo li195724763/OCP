@@ -35,6 +35,16 @@ public class Chapter8 {
 		
 		File testMkdirs = new File("C:/AMD/testmkdirdd/testmkdir.txt");
 		testMkdirs.mkdirs();
+		
+		for(File file1 : file.listFiles()) {
+			
+		}
+		
+		int [] a = new int[10];
+		
+		for(int i : a) {
+			
+		}
 	}
 	
 	public static void testMarkAndReset() {
@@ -120,7 +130,7 @@ public class Chapter8 {
 		}
 	}
 	
-	public static void testBufferedReaderWriter() {
+	public static void testBufferedReaderWriter() throws NullPointerException{
 		//List<String> readResult = new ArrayList<>();
 		String data;
 		try(BufferedReader read = new BufferedReader(new FileReader("C:\\Java\\TestBufferReader.txt")); 
