@@ -80,7 +80,11 @@ public class Chapter9 {
 		for(int i=0;i<p1.getNameCount();i++) {
 			System.out.println("This is the " + i + "th element. It is a " + p1.getName(i).toString());
 		}
-		
+		//System.out.println("root with getName(0) is : " + Paths.get("C:").getName(0));//Exception in thread "main" java.lang.IllegalArgumentException
+		System.out.println("root with getName(0) is : " + Paths.get("C:", "Java").getName(0));
+		System.out.println("getNameCount with path symbole: " + Paths.get("C:", "Java", "..", ".").getNameCount());
+		System.out.println("getNameCount test1 " + Paths.get(".").toString() + Paths.get(".").getNameCount());
+		System.out.println("getNameCount test2 " + Paths.get(".").normalize().toString() + Paths.get(".").normalize().getNameCount());
 	}
 	
 	public static void testGetParentRootName() {
@@ -113,6 +117,8 @@ public class Chapter9 {
 		System.out.println("Path is: " + absolute);
 		System.out.println("sub path 0,2 is " + sub1);
 		System.out.println("sub path 0,3 is " + sub2);
+		//System.out.println("sub path 3,3 is " + absolute.subpath(3, 3));//IllegalArgumentException
+		//System.out.println("sub path 3,3 is " + absolute.subpath(1, 1));//IllegalArgumentException
 	}
 	
 	public static void testToAbsolutePath() {
@@ -124,10 +130,13 @@ public class Chapter9 {
 	public static void testRelativize() {
 		Path absolute1 = Paths.get("C:","Java", "Chapter9", "TestPath1.txt");
 		Path absolute2 = Paths.get("C:","Java", "Chapter9", "test", "test","test11");
+		Path absolute3 = Paths.get("C:","Java", "Chapter9");
 		Path root = Paths.get("C:");
 		Path relative1 = Paths.get("src", "Chapter9", "RelativePath.txt"); 
 		Path relativize1t2 = absolute1.relativize(absolute2);// The beginning is always ..\  , the end is the last path element in the parameter.
 		Path relativize2t1 = absolute2.relativize(absolute1);
+		Path relativize2t3 = absolute2.relativize(absolute3);
+		Path relativize3t2 = absolute3.relativize(absolute2);
 		//Path mix = absolute1.relativize(relative1);//IllegalArgumentException: 'other' is different type of Path
 		//Path mix = relative1.relativize(absolute1);//IllegalArgumentException: 'other' is different type of Path
 		//Path withRoot = relative1.relativize(root);//IllegalArgumentException: 'other' is different type of Path, since only root
@@ -135,6 +144,8 @@ public class Chapter9 {
 		System.out.println("Path2 is: " + absolute2);
 		System.out.println("relativize1t2 is " + relativize1t2);
 		System.out.println("relativize2t1 is " + relativize2t1);
+		System.out.println("relativize2t3 is " + relativize2t3);//  ..\..\..
+		System.out.println("relativize3t2 is " + relativize3t2);//  test\test\test11
 	}
 	
 	public static void testResolveNormalize() {
@@ -156,7 +167,11 @@ public class Chapter9 {
 		Path absolute1 = Paths.get("C:","Java", "Chapter9", "TestPath1.txt");
 		Path relative1 = Paths.get("../");//this cancels out the OCP directory. 
 		try {
+			System.out.println("testToRealPath, the current working directory without to real path is : " + Paths.get("."));//current directory without to real path.
+			System.out.println("testToRealPath, the current working directory after normalize is : " + Paths.get(".").normalize().toString().isBlank());//current directory after normalize
 			System.out.println("testToRealPath, the current working directory is : " + Paths.get(".").toRealPath());//current directory.
+			System.out.println("testToRealPath, the current working directory after calling toAbsolutePath is : " + Paths.get(".").toAbsolutePath());// toAbsolutePath VS toRealPath
+			System.out.println("testToRealPath, the current working directory after calling toAbsolutePath.normalize is : " + Paths.get(".").toAbsolutePath().normalize());// toAbsolutePath and normalize
 			System.out.println("testToRealPath, the real path is : " + absolute1.toRealPath());
 			System.out.println("testToRealPath, for relative1, the real path is : " + relative1.toRealPath());
 			//Paths.get("dsaf").toRealPath();//throw no such file exception
@@ -201,16 +216,25 @@ public class Chapter9 {
 	
 	public static void testMove() {
 		Path source = Paths.get("C:","Java", "Chapter9","TestMove.txt");
+		
+		Path source_atomic = Paths.get("C:","Java", "Chapter9","TestMoveAtomic.txt");
+		Path target_atomic = Paths.get("C:","Java", "Chapter9", "test", "Moved.txt");
+		
 		Path target = Paths.get("C:","Java", "Chapter9", "tests", "Moved.txt");
 		
 		Path sourcedir = Paths.get("C:","Java", "Chapter9","testscr");
-		Path targetdir = Paths.get("C:","aJava","Chapter9","tardir");
+		Path targetdir = Paths.get("C:","Java","Chapter9","tardir");
+		
+		Path sourceCrossDrive = Paths.get("C:", "Java", "acrossdrive.txt");
+		Path targetCrossDrive = Paths.get("D:", "acrossdriveD.txt");
 		
 		try {
-			//Files.move(source, target, ATOMIC_MOVE);//import static java.nio.file.StandardCopyOption.*;
+			//Files.move(source_atomic, target_atomic);//Without ATOMIC_MOVE, throw FileAlreadyExistsException if file already exist.
+			Files.move(source_atomic, target_atomic, ATOMIC_MOVE);//with ATOMIC_MOVE
 			//Files.move(source, target);
 			//Files.move(sourcedir, targetdir);
 			//Files.move(Paths.get("C:/Java/Chapter9/testMove"), Paths.get("C:/Java/Chapter9/testMoveTargetParent/testMoveTarget"), NOFOLLOW_LINKS);//NO Exception, will cut all the files/sub-directories to the target
+			//Files.move(sourceCrossDrive, targetCrossDrive);
 			throw new IOException();
 		} catch (IOException e) {
 			System.out.println("Move falied");
@@ -265,7 +289,7 @@ public class Chapter9 {
 			e.printStackTrace();
 		}
 	}
-	
+		
 	public static void testAttribute() {
 		Path file = Paths.get("C:","Java", "Chapter9","TestPath.txt");
 		Path directory = Paths.get("C:","Java", "Chapter9");
@@ -290,12 +314,14 @@ public class Chapter9 {
 	}
 	
 	public static void testFunctional() {
-		Path file = Paths.get("C:/Java");
+		Path file = Paths.get("C:/Java", "Chapter9");
 		Path file2 = Paths.get("C:/Java", "Chapter9","question16.csv");
 		file.equals(file2);
 		try {
 			final long modifiedTime = Files.getLastModifiedTime(file).toMillis() - 10000;// throw IOException
-			Files.walk(file, FOLLOW_LINKS);
+			System.out.println("*****start test wakk1*******");
+			Files.walk(file).forEach(System.out::println);;
+			System.out.println("*****end test wakk1*******");
 			Files.walk(file).filter(s -> s.toString().contains("File")).forEach(System.out::println);
 			Files.find(file, 3, (path , attribute) -> path.toString().contains("Test") && attribute.lastModifiedTime().toMillis() > modifiedTime).forEach(System.out::println);
 			Files.list(file).forEach(System.out::println);
