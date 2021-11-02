@@ -3,7 +3,7 @@ package Chapter1;
 import java.util.ArrayList;
 
 /*****Enum type of static inner class */
-enum Season {WINTER, SPRING, SUMMER, FALL;} // must not be local(in a method), can be declared in Chapter1 or outside of Chapter1.
+enum Season {WINTER, SPRING, SUMMER, FALL, unknow;} // must not be local(in a method), can be declared in Chapter1 or outside of Chapter1.
 enum SeasonConstractor{
   WINTER("Cold"),
   SUMMER("Hot"),
@@ -27,9 +27,10 @@ public class Chapter1{
   private int nestedVariable = 0;
   int asdfjsk = 1_00;
   public static Chapter1 myClass = new Chapter1();
+  //System.out.println("fast"); DOES NOT COMPILE
 	
 /*****different type of static inner class */
-  public static class staticInner{
+  public static class StaticInner{
 	    private String i = "static inner i";
 	    private final String sFinal = "static inner i";
 	    private void printi(){
@@ -50,7 +51,7 @@ public class Chapter1{
   
   private static final class innerStaticPri1{}
   protected static abstract class innerStaticPri2{}
-  private static interface innerStaticPri3{}
+  private static interface innerStaticPri3{}// innter static interface
   
 
   /********Member inner class */
@@ -64,6 +65,7 @@ public class Chapter1{
 	System.out.print("Hi ");
       }
       System.out.println();
+      boolean accessOuterClassVariable = Chapter1.this.id > 1;
     }
 
     class NestClass{
@@ -91,9 +93,10 @@ public class Chapter1{
     System.out.println("accessing member inner class private variable: " + mInner.nestedVariable);
 
     Chapter1.MemberInnerClass.NestClass nestClass = mInner.new NestClass(); //this synatx is needed , since the second nested class is too deep for Java to find.
+    Chapter1.MemberInnerClass.NestClass nestClass_2 = new Chapter1().new MemberInnerClass().new NestClass();
     nestClass.printInstanceVariable();
 
-    Chapter1.staticInner si = new staticInner();
+    Chapter1.StaticInner si = new StaticInner();
     si.printi();
    
     testHashCode();
@@ -101,9 +104,11 @@ public class Chapter1{
     myClass.anonymousInArguement();
     testEnum();
     testInstanceOf();
-    myClass.calculate();
+    myClass.testInnerClass();
     System.out.println("test local inner class under static method: " + testLocalInnerClassUnderStaticMethod());
-    myClass.testStaticInnerClassUnderNonCtaticLocalMethod();
+    myClass.testStaticInnerClassUnderNonStaticLocalMethod();
+    testStaticInnerClassUnderStaticLocalMethod();
+    testExtendMemberInnerClassUnderStaticMethod();
   }
   
   public static void testHashCode() {
@@ -125,6 +130,10 @@ public class Chapter1{
 	  boolean result = rr instanceof ArrayList;
 	  
 	  System.out.println("result of testInstanceOf is: " + result);
+	  
+	  String[] sArray = new String[5];
+	  System.out.print("test instanceof on Array type: ");
+	  System.out.println(sArray instanceof Object[]);
   }
   
   public static void testEnum() {
@@ -134,16 +143,20 @@ public class Chapter1{
 	  }   
 	
 	    Season ss = Season.SUMMER;
+	    //Season ss_1 = Season.summer;//does not compile;
+	    Season ss_2 = Season.unknow;
+	    //Season ss_3 = Season.UNKNOW;//does not compile; value is case sensitive
 	    switch (ss) {
 	      case WINTER : System.out.println("enum WINTER"); break;
 	      case SUMMER: System.out.println("enum SUMMER"); break; //DOES NOT COMPILE if using Season.SUMMER.
 	      default : System.out.println("enum default"); 
 	    }
 	
-	    //SeasonConstractor.WINTER.print();
+	    SeasonConstractor.WINTER.print();
 	    for(SeasonConstractor s : SeasonConstractor.values()) {
 	    	System.out.println(SeasonConstractor.valueOf("WINTER"));//valueOf() works on enum class too
 	        s.print();
+	        SeasonConstractor.valueOf("WINTER").print();
 	    }
 	    
   }
@@ -158,7 +171,7 @@ public class Chapter1{
   }
   
   /****local inner class */
-  public void calculate() {
+  public void testInnerClass() {
     class Inner { //DOES NOT COMPILE if adding access modifier in local inner class, other than abstract
      public void multiply(int x, int y) {
        System.out.println("ID from outter class is " + Chapter1.this.id);
@@ -171,7 +184,7 @@ public class Chapter1{
   
   /****local inner class under static method*/
   public static int testLocalInnerClassUnderStaticMethod() {
-	   final class Inner { //DOES NOT COMPILE if adding access modifier in local inner class, other than abstract or final
+	    class Inner { //DOES NOT COMPILE if adding access modifier in local inner class, other than abstract or final
 	     public int multiply(int x, int y) {
 	       System.out.println("ID from outter class is " + Chapter1.identifier);
 	       System.out.println(x * y);
@@ -179,7 +192,10 @@ public class Chapter1{
 	     }
 	    }
 	    Inner inner = new Inner();
-	    return inner.multiply(20,200);
+	    
+	    
+	    class a extends Inner {}
+	    return inner.multiply(20,200);    
 	  }
 
   /****local inner class */
@@ -230,19 +246,39 @@ public class Chapter1{
 
   /****anonymous class passed as parameter */
   public void anonymousInArguement(){//
-    System.out.println(this.result(100, new annTest() { //DOES NOT COMPILE if missing the () after the class name
+    System.out.println(anonymousInArguement(100, new annTest() { //DOES NOT COMPILE if missing the () after the class name
                                   public int result(){return 1;}
                                 })
                       );
   }
 
-  public int result(int i, annTest at){
+  public int anonymousInArguement(int i, annTest at){
     return i + at.result();
   }
   
   /****static inner class under non-static local method */
-  public void testStaticInnerClassUnderNonCtaticLocalMethod() {
-	  staticInner sInner = new staticInner();
+  public void testStaticInnerClassUnderNonStaticLocalMethod() {
+	  StaticInner sInner = new StaticInner();
+	  Chapter1.StaticInner sInner_2 = new StaticInner();
+	  Chapter1.StaticInner sInner_3 = new Chapter1.StaticInner();
+  }
+  
+  public static void testStaticInnerClassUnderStaticLocalMethod() {
+	  StaticInner sInner = new StaticInner();
+	  Chapter1.StaticInner sInner_2 = new StaticInner();
+  }
+  
+  public static void testExtendMemberInnerClassUnderStaticMethod() {
+	//class a extends MemberInnerClass{}  //does not compile, can't extend a member inner class under a static method
+	  MemberInnerClass inn = new Chapter1().new MemberInnerClass();
+	  Chapter1 c = new Chapter1();
+
+	  //class b extends StaticInner{}
+  }
+  
+  public void testExtendMemberInnerClassUnderInstanceMethod() {
+	  class a extends MemberInnerClass{}   
+	  class b extends StaticInner{}
   }
 }
 

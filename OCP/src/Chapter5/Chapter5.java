@@ -6,6 +6,7 @@ import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Properties;
@@ -49,6 +50,8 @@ public class Chapter5 {
 		
 		testStringComparasion();
 		testStringReplace();
+		testMissingKeyInPropertiesFileAndTestgetContents();
+		testInvalidResourceBundleFile();
 	}
 	
 	public static void testZonedTime() {
@@ -58,6 +61,7 @@ public class Chapter5 {
 		//ZoneId zone = new ZoneId("");//Does not compile
 		//ZoneId.getAvailableZoneIds().stream().filter(s->s.contains("US")).forEach(System.out::println);
 		//ZonedDateTime tc12 = ZonedDateTime.of(2015, Month.APRIL, 15, 17,10,10,200, Zone); //DOES NOT COMPILE, ZonedDateTime does not support enum month
+		ZonedDateTime tc12 = ZonedDateTime.of(2015, 4, 15, 17,10,10,200, Zone); 
 		
 		System.out.println("Converting ZonedDateTime to instant " + ZONED_TIME.toInstant());
 	}
@@ -223,8 +227,9 @@ public class Chapter5 {
 	}
 	
 	public static void testResourceBundleAndProperties(Locale locale) {
+		//ResourceBundle rnrn = new ResourceBundle();//ResourceBundle is abstract class
 		ResourceBundle rb = ResourceBundle.getBundle("Chapter5/Zoo", locale);//FULL PATH IS NEEDED!!!!, or using "Chapter5/Zoo" to force the system pick .properties files.
-		//ResourceBundle rb = ResourceBundle.getBundle("Chapter5.Zoo", locale);//this is using .java class
+		//ResourceBundle rb = ResourceBundle.getBundle("Chapter5.Zoo", locale);//this is using .java class, package format is mandentory.
 		Properties property1 = new Properties();
 		
 		System.out.println(rb.getBaseBundleName());
@@ -265,7 +270,7 @@ public class Chapter5 {
 		String s1 = "40.5";
 		String s2 = "$40.5";
 		try {
-			System.out.println(NUM_FORMAT.parse(s1)); //DOES NOT COMPILE, unhandled checked exception
+			System.out.println(NUM_FORMAT.parse(s1)); 
 			System.out.println(NUM_FORMAT.parse("40.5fasnfkefn"));// 40.5
 			System.out.println(NUM_FORMAT.parse("4fasnfkefn0.5"));// 4
 			System.out.println(NUM_FORMAT.parse("40.$5"));// 40
@@ -276,6 +281,7 @@ public class Chapter5 {
 			e.printStackTrace();
 		} 
 			
+		//Number nm = new Number();Number is an abstract class
 	}
 	
 	public static void testDateFormat() {
@@ -310,8 +316,8 @@ public class Chapter5 {
 			
 		
 		String date = "April 02 2015";//will throw exception if the date String does not match the passing in pattern 
-		System.out.println(LocalDate.parse(date,CUSTIMIZED_MMMM_DD_YYYY));
-		//System.out.println(ZonedDateTime.parse(date,CUSTIMIZED_MMMM_DD_YYYY));
+		System.out.println(LocalDate.parse(date,CUSTIMIZED_MMMM_DD_YYYY)); 
+		//System.out.println(ZonedDateTime.parse("April 02 2015",CUSTIMIZED_MMMM_DD_YYYY)); // parse exception, no Zone provided.
 		String dateDefault = "2015-04-03";//Default date format
 		System.out.println(LocalDate.parse(dateDefault));
 		System.out.println(LocalTime.parse("11:20")); //NO need to pass a formatter if LocalTime.parse
@@ -342,11 +348,14 @@ public class Chapter5 {
 		String tc15 = "b";
 		String tc16 = "a" + "b";
 		String tc17 = tc14+tc15;
-		System.out.print("String comparasion: ");
+		System.out.println("String comparasion: ");
 		System.out.println(tc13 == tc16);// return "true" due to string literal pool
 		System.out.print("String tc17 is: " + tc17 + ". Is tc17 equals to String Literal? ");
 		System.out.println(tc17==tc16);//return "false" due to reference comparasion
-		
+		System.out.println(tc17==tc13);// false
+		System.out.println("a"+"b" == "ab");// true
+		System.out.println("a"+"b" == tc13);// true
+	
 		String obj = new String("a");
 		String literal_a = "a";
 		String literal_a2 = "a";
@@ -355,7 +364,7 @@ public class Chapter5 {
 		String lit_lit = literal_a + literal_b;
 		String mixed = obj + literal_b;
 		String pureLit = "ab";
-		
+		System.out.println();
 		System.out.print("1: "); System.out.println(literal_a == literal_a2);//true
 		System.out.print("2: ");System.out.println(lit_lit == pureLit);//false
 		System.out.print("3: ");System.out.println(lit_lit == "ab");//false
@@ -368,6 +377,39 @@ public class Chapter5 {
 		String tc17 = "aaaaaaa";
 		System.out.println("testStringReplace: " + tc17.replace('a', 'b'));
 		System.out.println("testStringReplace: " + tc17.replaceAll("aa", "bb"));
+	}
+	
+	public static void testMissingKeyInPropertiesFileAndTestgetContents() {
+		ResourceBundle rb = ResourceBundle.getBundle("Chapter5.Zoo_fr_FR", new Locale("fr", "FR"));
+		System.out.println(rb.getString("anotheragain"));
+		
+		//System.out.println(rb.getString("asdfdasfsdaf")); throw MissResourceException if not able to find the key
+		
+		//test page 534, chapter22, question 22. does getContent() being executed when trying to get the property's value? No
+		ResourceBundle rb_java = ResourceBundle.getBundle("Chapter5.Zoo_en_US", new Locale("en", "US"));
+		List<String> list = (List<String>)rb_java.getObject("anArrayList");
+		list.add("a");
+		list.add("b");
+		list.add("c");
+		list.add("d");
+		list.add("e");
+		list.add("f");
+		System.out.println("list size() is " + list.size());
+		
+		List<String> list2 = (List<String>)rb_java.getObject("anArrayList");
+		System.out.println("get the same property again, not the list size() is " + list2.size());
+		
+		int count =  (Integer)rb_java.getObject("aCounter");
+		System.out.println("first time getting count is " + count);
+		
+		int count2 =  (Integer)rb_java.getObject("aCounter");
+		System.out.println("secoud time getting count is " + count2);
+		
+	}
+	
+	public static void testInvalidResourceBundleFile() {
+		//ResourceBundle rb = ResourceBundle.getBundle("Chapter5.InvalidLocal", new Locale("en", "US"));
+		//MissingResourceException. since there is no valid resource bundle, change "InvalidLocal_US.properties" to "InvalidLocal_en_US.properties" fix the problem
 	}
 	
 }

@@ -2,6 +2,7 @@ package Chapter3;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.*;
+import java.util.stream.Stream;
 
 //class generic<?>{} DOES NOT COMPILE
 //class Generic1<T extends B>{} DOES NOT COMPILE, since B is not a defined class
@@ -22,6 +23,7 @@ class Generic3 implements Shippable<Exception>{}//NO LONGER A GENERIC CLASS
 class Generic4<U> implements Shippable<U> {}
 
 class Generic6 implements Shippable{}// warning here
+//class Generic6 implements Shippable<T>{}// does not compile, due to <T> after Shippable
 
 /***Comparable and Comparator***/
 
@@ -81,7 +83,15 @@ public class Chapter3<T> implements Comparable<Chapter3>{
 		testCreatingGenericInstance();	
 		testUpperBound();
 		tesetCallStaticGenericMethod();
+		testGenericInStaticMethodSignature(new ArrayList<String>());
+		new Chapter3("a", "b").testGenericInInstanceMenthodSignature("asd");
 		testReceiveRawCollection();//pass a raw collection into a generic method may cause exception.
+		ArrayList<String> as = new ArrayList<>();
+		ArrayList<Integer> as_2 = new ArrayList<>();
+		ArrayList<Object> as_3 = new ArrayList<>();
+		testWildCardInFunctionParameter(as);
+		//testWildCardInFunctionParameter(as_2);//does not compile
+		testWildCardInFunctionParameter(as_3);
 		
 		/*Comparator Comparable MethodReference MergeMap*/
 		testComparable();
@@ -142,6 +152,7 @@ public class Chapter3<T> implements Comparable<Chapter3>{
 		tc4.add("first");
 		tc4.add("second");
 		tc4.add("thrid");
+		tc4.add(null);
 		tc4.forEach(s -> System.out.println(s));
 		
 		String[] tc5 = {"a", "a", "b", "c"};
@@ -182,12 +193,13 @@ public class Chapter3<T> implements Comparable<Chapter3>{
 	public static void testCreatingGenericInstance() {
 		
 		/* DOES NOT COMPILE
-		 * List<T extends Exception> tc7 = new ArrayList<>();//Does NOT COMPILE, no upper-bound or lower-bound with generic parameter name when instanciate an Object,
+		 * List<T extends Exception> tc7 = new ArrayList<>();//Does NOT COMPILE, no upper-bound or lower-bound with generic parameter name when creating an Object,
 		 * instead you can write List<? extends Exception> tc7 = new ArrayList<>();
 		 * //List<B extends Number> tc10;//same as above
-		 * static Generic4<Exception> tc7 = new Generic4<>(); //DOES NOT COMPILE if using generic on static varilable 
+		 * static List<Exception> tc = new ArrayList<>(); //DOES NOT COMPILE if using generic on static variable  
 		 * Generic3<Exception> tg3 = new Generic3<>();//DOES NOT COMPILE Generic3 is no longer a generic class
 		 */
+		
 		List<? extends String> upperbound = new ArrayList<>();
 		//upperbound.add("aa");//DOES NOT COMPILE, upperbound becomes immutable. 
 		List<? super IOException> lowerbound = new ArrayList<>();
@@ -203,9 +215,13 @@ public class Chapter3<T> implements Comparable<Chapter3>{
 		//tc11.set(1, "setFirest");//DOES NOT COMPILE, tc11 is immutable,
 		
 		/*Collections does not know how to suport a Generic6*/
-		ArrayList<Generic6> tc19 = new ArrayList<>();
-		//Collections.sort(tc19);//DOES NOT COMPILE, arguement does not compatible 
-		//Collections.binarySearch(tc19, new Generic6());//DOES NOT COMPILE, arguement does not compatible 
+		List<Generic6> tc19 = new ArrayList<>();
+		Set<String> tc20 = new TreeSet<>();
+		List<String> tc21 = new ArrayList<>();
+		//Collections.sort(tc19);//DOES NOT COMPILE, Generic6 did not implements Comparable
+		//Collections.sort(tc20);//DOES NOT COMPILE. tc20 is not a List
+		//Collections.binarySearch(tc19, new Generic6());//DOES NOT COMPILE, argument did not implements Comparable
+		Collections.sort(tc21);
 	}
 	
 /***** Generic in function signature. */
@@ -219,7 +235,11 @@ public class Chapter3<T> implements Comparable<Chapter3>{
 		return t;
 	}
 	
-	//public void printMessage3(T t) {}//DOES NOT COMIPLE, you can OMIT ONLY when  T is defined in class defination
+	//You can OMIT ONLY when T is defined in class definition, for instance method, you need the declaration for static method.
+	public <T> void printMessage3(T t) {}
+	public void printMessage4(T t) {}
+	public static <T> void printMessage5(T t) {} 
+	//public static void printMessage6(T t) {} //does not compile
 
 	
 	public static <A> A testStaticGenericMethod(A t) {//Does not compile if missing <A>
@@ -263,13 +283,23 @@ public class Chapter3<T> implements Comparable<Chapter3>{
 	  System.out.println(u.getMessage());	
 	}
 	
-
+	public static <T> void testGenericInStaticMethodSignature(T t) {// you must declare <T> in static method no matter <T> defined in class declaration or not
+		
+	}
+	
+	public void testGenericInInstanceMenthodSignature(T t) { // you can omit <T> if T is already defined on class declaration
+		
+	}
 	
 	public static void testReceiveRawCollection() {
 		List tc8 = new ArrayList<>();
 		tc8.add("abc"); 
 		//testReceiveRawCollection(tc8);//throw compile warning for raw type, throw ClassCastException,
 		//since tc8 contains a String but testReceiveRawCollection trying to read Exception
+	}
+	
+	public static void testWildCardInFunctionParameter(List<? super String> ls) {
+		
 	}
 	
 	public static void testReceiveRawCollection(List<Exception> le) {
@@ -328,6 +358,15 @@ public class Chapter3<T> implements Comparable<Chapter3>{
 		System.out.println("testMethodReference: " + tc27.getChapter3("123", "456").id);
 		
 		BiConsumer<Set<String>, Set<String>> bo = Set::addAll; //(Set<String> s1, Set<String> s2) -> s1.addAll(s2);
+		Stream.of("aaa", "aaa").filter(String::isEmpty).count();
+		//Stream.of("aaa", "aaa").filter(!String::isEmpty).count();// "!String::isEmpty" does not compile
+		
+		Predicate<String> ps = String::isEmpty;
+		BiFunction<String,String,Boolean> bs = String::startsWith;
+		BiFunction<String,Character,Integer> bsi = String::indexOf;
+		bs.apply("abc", "b");
+		
+		String sr = "asdf";
 	}
 	
 	public static void testMapMerge() {

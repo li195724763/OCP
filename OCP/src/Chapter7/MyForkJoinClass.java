@@ -6,7 +6,10 @@ import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveAction;
 import java.util.concurrent.RecursiveTask;
 
-public class ForkJoin extends RecursiveAction{
+public class MyForkJoinClass extends RecursiveAction{
+	
+	int i = 0;
+	static int j = 0;
 	
 	/******member inner class*/
 	public class ForkJoinRecursiveTask extends RecursiveTask<Double>{
@@ -45,10 +48,11 @@ public class ForkJoin extends RecursiveAction{
 	private int start = 0;
 	private int end = 0;
 	
-	public ForkJoin(Double[] weight, int start, int end) {
+	public MyForkJoinClass(Double[] weight, int start, int end) {
 		this.weight = weight;
 		this.start = start;
 		this.end = end;
+		j=0;
 	}
 
 	@Override
@@ -63,24 +67,26 @@ public class ForkJoin extends RecursiveAction{
 		} else {
 			int middle = start + (end-start)/2;
 			System.out.println("start is: " + start + " middle is :" + middle + " end is : " + end);
-			invokeAll(new ForkJoin(this.weight, start, middle), 
-					  new ForkJoin(this.weight, middle, end)
+			invokeAll(new MyForkJoinClass(this.weight, start, middle), 
+					  new MyForkJoinClass(this.weight, middle, end)
 					 );// invokeAll can take different numbers of ForkJoin instant.
 		}
 	}
 	
 	public static void main(String[] args) {
+		//i=0;//does not compile
+		
 		Double[] weights = new Double[10];
 		
 		//*****************RecursiveAction*********************
-		ForkJoinTask<?> recursiveAction = new ForkJoin(weights, 0, weights.length);
+		ForkJoinTask<?> recursiveAction = new MyForkJoinClass(weights, 0, weights.length);
 		ForkJoinPool recursiveActionPool_1 = new ForkJoinPool();
 		recursiveActionPool_1.invoke(recursiveAction);
 		
 		//*****************RecursiveTask*********************
 		long start = System.currentTimeMillis();
 		double[] weights2 = new double[10000];
-		ForkJoin tc4 = new ForkJoin(weights, 0, weights.length);
+		MyForkJoinClass tc4 = new MyForkJoinClass(weights, 0, weights.length);
 		ForkJoinRecursiveTask tc5 = tc4.new ForkJoinRecursiveTask(weights2, 0, 10);//DOES NOT COMPILE if ForkJoinTask is a super class of ForkJoin,
 		                //since ForkJoinRecursiveTask is an inner class of ForkJoin, and has no nested relationship with ForkJoinTask(provided by java.util.concurrent)
 	    ForkJoinRecursiveTask task_2 = tc4.new ForkJoinRecursiveTask(weights2, 0, weights2.length);
@@ -92,7 +98,7 @@ public class ForkJoin extends RecursiveAction{
 		  System.out.println("******the totoal sum is: " + sum); long end =
 		  (System.currentTimeMillis()-start); System.out.println("\n" + end +
 		  " milliseconds" );
-		 
+		  pool_2.shutdown();
 
 	}
 

@@ -1,6 +1,7 @@
 package Chapter4;
 import java.util.*;
 import java.util.function.*;
+import java.io.IOException;
 import java.time.*;
 import java.util.stream.*;
 import java.util.stream.Collectors.*; 
@@ -13,6 +14,8 @@ public class Chapter4 {
 		testBiConsumer();
 		testPredicate();
 		testBiFunction();
+		testFunctionalInterfaceAutoboxing();
+		testReturnLambdaExpression();
 		
 		testStreamCreation();
 		testStreamReduction();	
@@ -27,6 +30,9 @@ public class Chapter4 {
 		
 		testOptional(); 	 
 		testAsList();
+		testAdvancedForLoopOnArray();
+		Object a = returnAnObject();
+		//String b = returnAnObject();does not compile
 	}
 	
 	static void testSupplier() {
@@ -83,6 +89,60 @@ public class Chapter4 {
 		BiFunction rawType = (s1,s2) -> true;
 		//BiFunction rawType_2 = (s1,s2) -> s1.startsWith(s2);//Does not compile
 		BiFunction<String, String, Boolean> notRawType = (s1,s2) -> s1.startsWith(s2);
+		
+	}
+	
+	static void testFunctionalInterfaceAutoboxing() {
+		BiFunction<Integer, Double, Integer> testWrapper1 = (s1,s2) -> s1;
+		testWrapper1.apply(3, 5.0);//autoboxing works when using.
+		//BiFunction<Integer, Double, Integer> testWrapper2 = (int s1, double s2) -> s1;//does not compile, Lambda expression needs Integer and Double
+		
+		Predicate<String> predicate1 = (String b) -> {return false;};
+		Predicate<String> predicate2 = (String b) -> {return (Boolean)true;};
+		//Predicate<Integer> predicate3 = (int i) -> {return i>0;}; does not compile, expect Integer but get int as input
+		
+		DoubleToIntFunction dToi1 = (double a) -> 3;
+		//DoubleToIntFunction dToi4 = d -> d;//does not compile, can't convert double to int without cast
+		DoubleToIntFunction dToi4 = d -> (int)d;
+		//DoubleToIntFunction dToi2 = (Double a) -> 3;// does not compile, input ask for a primitive, but get a wrapper
+		DoubleToIntFunction dToi2 = a -> 3;
+		dToi2.applyAsInt((Double) 3.0);//unboxing compile when using it 
+		DoubleToIntFunction dToi3 = (double a) -> (Integer)3;
+		
+		DoubleSupplier ds1 = () -> {return 1.0;};
+		DoubleSupplier ds2 = () -> {return (Double) 1.0;};
+		DoubleSupplier ds6 = () -> {return (Double) null;};
+		Supplier<Double> ds3 = () -> {return (Double)1.0;};
+		Supplier<Double> ds4 = () -> {return 1.0;};
+		Supplier<Integer> ds5 = () -> {return 1;};
+		
+		//Consumer<Double> dc1 = (double d) -> System.out.println(d);// does not compile, input ask for a wrapper but get a primitive
+		
+		//LongToDoubleFunction ltd = (Long ll) -> {return ll;};//does not compile, expect Long but getting long.
+		
+		LongToDoubleFunction ltd = l -> l;// compile since java can convert long to double without a cast
+		//DoubleToLongFunction dtl = d -> d;//does not compile, can't convert double to long
+		IntToLongFunction itd = (int i) -> {int i1 = 0; return i1;};// compile since java can convert int to long without a cast
+		
+		//DoubleToIntFunction dti = (double d) -> {return d;};//does not compile, can't convert int to double	
+		
+		long aLong = 1L;
+		double aDouble = aLong;
+		
+		double aDouble2 = 1.0;
+		//long aLong2 = aDouble2; //does not compile
+		
+		DoubleFunction<Double> df = d -> d; 
+		//DoubleFunction<Double> df2 = (Double d) -> d; // does not compile, expect double get Double
+	}
+	
+	static void testReturnLambdaExpression() {
+		Predicate<String> ps = testReturnLambdaExpressionExe();
+		System.out.println("testReturnLambdaExpression: " +  ps.test("abc"));
+	}
+	
+	static Predicate<String> testReturnLambdaExpressionExe() {
+		return s->s.length()>=0;
 	}
 	
 	static void testStreamCreation() {
@@ -120,6 +180,13 @@ public class Chapter4 {
 		Stream.iterate(1, x -> x++).limit(5).forEach(System.out::print); //this print 123456.
 		System.out.println("");
 		
+		String[] sa = new String[] {"a","b","c","d","e"};
+		System.out.println("test array in stream when creation");
+		Stream.of(sa).forEach(System.out::println);
+		
+		Map<String, String> ms = new HashMap<>(); //there is no stream() method from Map, since stream() method is from Collection interface.
+		List<String> ls;
+		//ls.stream();
 	}
 	
 	static void testStreamReduction() {
@@ -160,6 +227,11 @@ public class Chapter4 {
 	    //does not compile if using "int" instead of Integer. 
 	    //the combiner is not making any different here on the result, since this is a serial stream. 
 	    //this is not good, since - is not associative, and identity is not 0 for number element. 
+	    
+	    Stream.of(1,3,5).reduce((Integer i1, Integer i2) -> i1*i2).orElse(Integer.MIN_VALUE);
+	    Optional<Integer> oi = Optional.of(1);
+	    //oi.orElse(Double.MIN_VALUE);// does not compile, expect a Integer but get a double
+	    oi.orElse(Integer.MIN_VALUE);
 	}
 	
 	static void testStreamCollect() {
@@ -172,7 +244,10 @@ public class Chapter4 {
 		Stream<String> tc21 = Stream.of("g","k", "l", "m");
 		System.out.println("ArrayList with Method reference: " + tc21.collect(ArrayList<String>::new, ArrayList<String>::add, ArrayList<String>::addAll));
 		
-		
+		String stringColl = Stream.of("abc", "bcd").collect(() -> new String(), (String a, String b) -> a.concat(b),(String a, String b) -> a.concat(b));
+		StringBuilder sb = Stream.of("abc", "bcd").collect(() -> new StringBuilder(), (StringBuilder a, String b) -> a.append(b),(StringBuilder a, StringBuilder b) -> a.append(b));
+		System.out.println("stringColl is: " + stringColl);
+		System.out.println("sb is: " + sb);
 	}
 	
 	static void testStreamCollectors() {
@@ -212,7 +287,8 @@ public class Chapter4 {
 	    Map<Integer,Long> tc62 = tc61.limit(5).collect(Collectors.groupingBy(String::length, Collectors.counting()));
 	    System.out.println("grouping by : " + tc62);
 	    
-	    long count = Stream.of(1,3,5).collect(Collectors.counting());
+	    Long count = Stream.of(1,3,5).collect(Collectors.counting());
+	    System.out.println("counting() in Collectors : " + count);
 	}
 	
 	static void testStreamMap() {
@@ -242,7 +318,7 @@ public class Chapter4 {
 		System.out.println("*****start: testSteamFlatMap_1*******");
 		tc28.flatMap((List<String> ls) -> ls.stream()).forEach(System.out::println);//Lambda to method refenrece, List::stream
 		
-		Stream.of(tc27).flatMap(List::stream).findAny().ifPresentOrElse((String s) -> System.out.println("String is NOT empty"), () -> System.out.println("String is empty"));
+		//Stream.of(tc27).flatMap(List::stream).findAny().ifPresentOrElse((String s) -> System.out.println("String is NOT empty"), () -> System.out.println("String is empty"));//does not work and don't know why
 		System.out.println("*****end: testSteamFlatMap_1*******");
 		System.out.print("testSteamFlatMap_1: ");
 		// .forEach(tc28_2 -> System.out.println("flat map: " + tc28_2));
@@ -263,6 +339,20 @@ public class Chapter4 {
 	     //IntStream tc73 = tc72.stream().flatMapToInt(x -> IntStream.of(x));//IntStream.of(x) changes Integer x to Stream<Integer> x 
 	     //tc72.stream().mapToInt(x -> x);
 	     Stream<IntStream> streamInt = tc72.stream().map(x -> IntStream.of(x));
+	     
+	     IntStream is1 = IntStream.of(1);
+	     IntStream is2 = IntStream.of(2);
+	     //Stream.of(is1,is2).flatMap(s -> s);// does not compile, expect a Stream<R>, but get an IntStream<R>
+	     Stream.of(is1,is2).flatMapToInt(s -> s);
+	     
+	     
+	     String[] sa1 = {"aa", "bb", "cc"};
+	     String[] sa2 = {"dd", "ee", "ff"};
+	     String[] sa3 = {"gg", "hh", "ii"};
+	     
+	     Stream<String[]> arrayStream = Stream.of(sa1, sa2, sa3);
+	     Stream<String> stringStream = arrayStream.flatMap(sa -> Stream.of(sa));
+	     stringStream.forEach(System.out::println);//print aa, bb, cc, dd, ee, ff, gg, hh, ii
 	}
 	
 	static void testStreamMethod() {	
@@ -343,6 +433,7 @@ public class Chapter4 {
 		tc36.get();//throw NoSuchElementException, which is a unchecked Exception.
 		
 		Optional<String> ofNullable = Optional.ofNullable(null);
+		System.out.println("test ofNullable : " + ofNullable.isPresent());
 		Double notAnum = Double.NaN;
 		System.out.println("not a number: " + notAnum);
 		
@@ -355,11 +446,25 @@ public class Chapter4 {
 	    Stream<String> tc8 = Stream.of("ape", "baby", "Flamigo");
 		Optional<String> tc9 = tc8.min((tc8_1, tc8_2) -> tc8_1.length() - tc8_2.length());// min() takes a Comparator, which is also a functional interface
 		tc9.ifPresent(System.out::println);
+		
+		//Optional.of(null);//throw NullPointerException
+		
+		Optional<Double> pd = Optional.of(1.0);
+		//pd.orElseGet(() -> {return new IOException();});//does not compile. expect a Double but get an IOException.
+		pd.orElseThrow(()->{return new RuntimeException();});
 	}
 	
 	static void testAsList() {
 		List<Integer> a = Arrays.asList(1,2,3);
 		//a.add(4); //Exception in thread "main" java.lang.UnsupportedOperationException, array backed list is immutable.
+	}
+	
+	static void testAdvancedForLoopOnArray() {
+		int[] a = new int[] {1,2,3,4,5,6,7,8,9};
+		
+		for(int i : a) {
+			System.out.println("testAdvancedForLoopOnArray: " + i);
+		}
 	}
 	
 	static <T> void aSupplier(Supplier<T> s) {
@@ -412,5 +517,8 @@ public class Chapter4 {
 	/*
 	 * static int calculator(String s) { return s.length(); }
 	 */
-
+	
+	static Object returnAnObject() {
+		return new String("asdf");
+	}
 }

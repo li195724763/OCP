@@ -1,5 +1,6 @@
 package Chapter7;
 
+import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -24,6 +25,12 @@ import java.util.stream.Stream;
 
 public class Chapter7 {
 	static int i = 0;
+	int nonstatic = 6;
+	
+	public synchronized void accessStaticVarilableUnderInstanceMethod() {
+		i=5;
+		new Chapter7().nonstatic = 6;
+	}
 
 	class PrintData implements Runnable {
 		@Override
@@ -63,6 +70,7 @@ public class Chapter7 {
 		
 		testExecutorService(); 
 		new Chapter7().testStaticExecutorUnderInstanceMethod();
+		testExecutorServiceUsingRunnable();
 		testexecutorServiceUsingCallable();
 		testExecutorWithFuture(); 
 		testExecutorInvokeAllInvokeAny();
@@ -88,7 +96,7 @@ public class Chapter7 {
 		printSomething();
 		infinitLoop();
 		exceptionInCallable();
-		Q18CyclicBarrierAndStream();
+		Q18ReuseCyclicBarrierAndStream();
 	}
 
 	public static void testRunnableAndCallable() {
@@ -99,12 +107,16 @@ public class Chapter7 {
 		
 		ExecutorService service = Executors.newSingleThreadExecutor();
 		service.execute(() -> i++);
+		service.submit(() -> {System.out.println("trying to throw a checked exception in Lambda");throw new SQLException("wasdfdsaf");});
 
 		// Runnable r2 = () -> j;//Does not compile, due to return value j
 		// Runnable r2 = () -> {i;};//Does not compile
 		Callable<String> c2 = () -> "a" + "b";
+		//Callable<Integer> c3 =  () -> {i++;};//does not compile, since you have used {} and ; so you must provide a "return".
+		Callable<Integer> c4 =  () -> {return i++;};
 		
 		service.shutdown();
+	
 	}
 
 	public static void testMainThreadAndSeparateThread() {
@@ -177,6 +189,9 @@ public class Chapter7 {
 			System.out.println("Future test get: " + tc1.get(1, TimeUnit.MILLISECONDS));// get throws 3 checked
 																						// exception
 			System.out.println("Future test isDone: " + tc1.isDone());
+			
+			Future<Double> fd = service.submit(() -> 3.14);
+			//Future<Object> fo = fd;//does not compile, generic type mismatch.
 		} finally {
 			if (service != null) {
 				service.shutdown();
@@ -241,6 +256,8 @@ public class Chapter7 {
 
 		ExecutorService es = Executors.newSingleThreadExecutor();
 		es.submit(() -> 1);
+		
+		//es.submit(() -> {Thread.sleep(1000);});//does not compile, unhandled exception
 		es.shutdown();
 		// es.submit(() -> 1);throw RejectedExecutionException, since trying to submit a
 		// task to a service executor already shut down.
@@ -249,6 +266,18 @@ public class Chapter7 {
 	public void testStaticExecutorUnderInstanceMethod() {
 		//Chapter7Util.staticExecutor.submit(() -> System.out.println("static executor service under instance method"));// throw RejectedExecutionException, if using static ExecutorService under instance method
 		Chapter7Util.staticExecutor.shutdown();
+	}
+	
+	public static void testExecutorServiceUsingRunnable() {
+		ExecutorService service = null;
+		service = Executors.newSingleThreadExecutor();
+		
+		service.execute(() -> returnSomething());
+		service.shutdown();
+	}
+	
+	public static String returnSomething() {
+		return "SomeThing";
 	}
 
 	public static void testexecutorServiceUsingCallable() throws InterruptedException, ExecutionException {
@@ -358,6 +387,9 @@ public class Chapter7 {
 
 		System.out.println("Concurrent Linked Queue: calling peek: " + tc2.peek());
 		System.out.println("Concurrent Linked Queue: calling poll: " + tc2.poll());
+		//tc2.offer(null); throw NPE
+		Queue<Integer> tc4 = new LinkedList<>();
+		tc4.add(null);
 
 		Deque<Integer> tc3 = new ConcurrentLinkedDeque<>();
 		//tc3.push(2);
@@ -681,6 +713,19 @@ public class Chapter7 {
 			// l.add(3);//Throw ConcurrentModificationException, since synchronized
 			// collection does not maintain a orignial copy.
 		}
+		
+		Deque<Integer> c3 = new ConcurrentLinkedDeque<>();
+		c3.add(1);
+		c3.add(2);
+		c3.add(3);
+		
+		for(int id : c3) {
+			c3.push(5);
+		}
+		
+		for(int id : c3) {
+			//c3.offer(5);//Exception in thread "main" java.lang.OutOfMemoryError: Java heap space
+		}
 	}
 	
 	public static void exceptionInCallable() {
@@ -694,10 +739,14 @@ public class Chapter7 {
 		//s.ch
 	}
 	
-	public static void Q18CyclicBarrierAndStream() {
-		CyclicBarrier cb = new CyclicBarrier(7);//assign with 9/8 the application will hang, assign with 7 the application will not hang 
+	public static void Q18ReuseCyclicBarrierAndStream() {
+		CyclicBarrier cb = new CyclicBarrier(5);
 		
-		IntStream.iterate(i, i->1).parallel().limit(10).forEach(i -> await(cb));;
+		//IntStream.iterate(i, i->1).parallel().limit(10).forEach(i -> await(cb));;//must assign a number which is a multiple of the number defined in CyclicBarrier constructor(e.g.:5), otherwise the system will hang
+		ExecutorService s = Executors.newFixedThreadPool(6);//must be multiple of 5, to prevent an application hang
+		Stream.iterate(0, i->i+1).limit(5).forEach(i -> s.submit(() -> await(cb)));
+		System.out.println("Q18CyclicBarrierAndStream done");
+		s.shutdown();
 	}
 	
 	public static void await(CyclicBarrier cb) {
@@ -709,7 +758,7 @@ public class Chapter7 {
 			e.printStackTrace();
 		}
 		
-		System.out.println("Barrier breaks");
+		System.out.println("Barrier breaks");// all the thread will execute this statement after the CyclicBarrier is broken. E.g.: 5 thread will have 5 lines of "Barrier breaks"
 	}
 
 }

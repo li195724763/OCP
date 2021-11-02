@@ -10,10 +10,13 @@ public class Chapter8 {
 		testSkip();
 		testInputOutputFileStream();
 		testFileEnd();
+		
 		testBufferedInputOutputStream();
+		testWriter();
 		testBufferedReaderWriter();
 		testPrintWriter();
-		testSystemInAndConsole();
+		testSystemInAndConsole();//this message cause the program to hang. since it ask for an input
+		testGetParent();
 		question23();
 	}
 	
@@ -130,6 +133,16 @@ public class Chapter8 {
 		}
 	}
 	
+	public static void testWriter() {
+		try(BufferedWriter w = new BufferedWriter(new FileWriter("C:\\Java\\Chapter18"))){
+			//w.flush();
+			
+			new File("C:\\Java\\Chapter18mkdir.txt").mkdirs();
+		}catch(IOException e) {
+			
+		}
+	}
+	
 	public static void testBufferedReaderWriter() throws NullPointerException{
 		//List<String> readResult = new ArrayList<>();
 		String data;
@@ -181,7 +194,8 @@ public class Chapter8 {
 	public static void testSystemInAndConsole() {
 		try(BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
 			
-			String input = br.readLine();
+			System.out.println("Enter the input !!!!!!!!!");
+			String input = br.readLine();// this is where the system stop and wait for an user's input
 			System.out.println("Thee old way of reading input: " + input);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -193,6 +207,13 @@ public class Chapter8 {
 			//c.writer().println("The new way of reading input" + input2);
 			
 		}
+	}
+	
+	public static void testGetParent() {
+		//root
+		File root = new File("C");
+		System.out.print("test getParent() by passing root: ");
+		System.out.println(root.getParent());
 	}
 	
 	public static void question23() {

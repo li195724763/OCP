@@ -2,10 +2,11 @@ package Chapter6;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.sql.SQLException;
 
 public class Chapter6 {
 
-	public static void main(String[] args) throws FileNotFoundException, IOException  {
+	public static void main(String[] args) throws Exception  {
 		testMultiCatch();
 		testRegularTryCatch();
 		testTryWithResource();
@@ -22,6 +23,12 @@ public class Chapter6 {
 			
 		}
 		System.out.println("End of Chapter6");
+		testCatchException();
+		testRethrowException_1();
+		testRethrowException_2();
+		testRethrowException_3();
+		testSuppressedException();
+		testReassignException();
 	}
 	
 	public static void testMultiCatch() {
@@ -109,9 +116,13 @@ public class Chapter6 {
 		
 		assert (x > 0) : ("1: X should great than 0");
 		assert x > 0 : ("2: X should great than 0");
-		assert(x > 0);
+		assert(x > 0) : ("2: X should great than 0");
+		assert(x > 0) : new Object();
+		//assert(x > 0) : throw new Exception();//does not compile
 		
 		System.out.println("code after assert");
+		Double d = (Double)1.0;
+		//long l = (long) d;//does not compile
 	}
 	
 	
@@ -134,7 +145,69 @@ public class Chapter6 {
 	public static void throwAnException() throws IOException {//DOES NOT COMPILE if missing throws IOException
 		throw new IOException();
 	}
-
+	
+	public static void testCatchException() {
+		//onlyThrowIOExceptionInMehotdSignature(); does not compile, need to declare or hand IOException
+	}
+	
+	public static void onlyThrowIOExceptionInMehotdSignature() throws IOException {
+	}
+	
+	public static void testRethrowException_1() { // need to declare here
+		try {
+			throw new IOException();
+		}catch (IOException e) {
+			//throw e;//does not compile, a rethrown  exception must be declared on method signature
+		}finally {
+			System.out.println();
+		}
+	}
+	
+	public static void testRethrowException_2() throws Exception{// Exception include IOException and SQLException
+		try {
+			throwTwoCheckedException();
+		}catch (Exception e) {
+			throw e;
+		}
+	}
+	
+	public static void testRethrowException_3() throws IOException{//this will cause the method does not compile, since SQLException is failed to be declared
+		try {
+			throwTwoCheckedException();
+		}catch (Exception e) {
+			//throw e;// DOES NOT COMPILE
+		}
+	}
+	
+	public static void throwTwoCheckedException() throws IOException, SQLException {}
+	
+	public static void testSuppressedException() {
+		try {
+			testSuppressedExceptionUtility();
+		}catch(Exception t) {
+			System.out.println(t);
+			t.printStackTrace();
+		}
+	}
+	
+	public static void testSuppressedExceptionUtility() throws Exception{
+		try(Chicken c = new Chicken();){
+			int i;
+			i=0;
+			throw new RuntimeException();
+		}
+		
+		
+	}
+	
+	public static void testReassignException() {
+		try {
+			
+		}catch(RuntimeException e) {
+			//e = new Exception();
+		}
+		
+	}
 }
 
 

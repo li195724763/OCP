@@ -72,6 +72,7 @@ public class Chapter9 {
 	}
 	
 	public static void testPathMethods() {
+		//Path aaa = new Path("");//does not compile
 		Path p1 = Paths.get("C:","Java", "Chapter9", "test");
 		//Path p1 = Paths.get("C:","Java");
 		//Path p1 = Paths.get("C:");
@@ -146,6 +147,9 @@ public class Chapter9 {
 		System.out.println("relativize2t1 is " + relativize2t1);
 		System.out.println("relativize2t3 is " + relativize2t3);//  ..\..\..
 		System.out.println("relativize3t2 is " + relativize3t2);//  test\test\test11
+		
+		//relative1.relativize(root);//java.lang.IllegalArgumentException due to root.
+		root.relativize(relative1);//java.lang.IllegalArgumentException due to root.
 	}
 	
 	public static void testResolveNormalize() {
@@ -168,13 +172,21 @@ public class Chapter9 {
 		Path relative1 = Paths.get("../");//this cancels out the OCP directory. 
 		try {
 			System.out.println("testToRealPath, the current working directory without to real path is : " + Paths.get("."));//current directory without to real path.
-			System.out.println("testToRealPath, the current working directory after normalize is : " + Paths.get(".").normalize().toString().isBlank());//current directory after normalize
+			System.out.println("testToRealPath, the current working directory after normalize is : " + Paths.get(".").normalize().toString());//current directory after normalize
 			System.out.println("testToRealPath, the current working directory is : " + Paths.get(".").toRealPath());//current directory.
 			System.out.println("testToRealPath, the current working directory after calling toAbsolutePath is : " + Paths.get(".").toAbsolutePath());// toAbsolutePath VS toRealPath
 			System.out.println("testToRealPath, the current working directory after calling toAbsolutePath.normalize is : " + Paths.get(".").toAbsolutePath().normalize());// toAbsolutePath and normalize
 			System.out.println("testToRealPath, the real path is : " + absolute1.toRealPath());
 			System.out.println("testToRealPath, for relative1, the real path is : " + relative1.toRealPath());
 			//Paths.get("dsaf").toRealPath();//throw no such file exception
+			Files.list(absolute1).map(p -> {
+				try {
+					p.toRealPath();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				return p;
+			});
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.out.println("testToRealPath, this is not a real path");
